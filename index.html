@@ -1179,22 +1179,25 @@ function dismissAction(mi,ai){
 /* ── Demo: simulate a strip scan ── */
 function demoScanStrip(){
   S.messages.push({role:'user',content:'📷 Scan my test strip'});
-  S.messages.push({role:'assistant',content:`I see your test strip! Here's what I'm reading:
-
-**Free Chlorine:** 0 ppm — critically low, pool is not sanitized
-**Total Chlorine:** 0.5 ppm
-**pH:** 6.8 — too acidic, below ideal range
-**Total Alkalinity:** 60 ppm — low, pH will be unstable
-**Calcium Hardness:** 100 ppm — low, water may corrode surfaces
-**Cyanuric Acid (CYA):** 0 ppm — no stabilizer at all, chlorine will burn off immediately
-
-This strip shows a pool that needs several corrections before it's safe to swim. Chlorine is at zero so there's no sanitation happening. The pH is acidic at 6.8 which can be corrosive. Your alkalinity is low which is why pH keeps dropping. And zero CYA means any chlorine you add will vanish in a few hours of sunlight.
-
-Let's tackle these one at a time — start with getting alkalinity up to stabilize pH, add some CYA to protect your chlorine, then bring chlorine up to a safe level.
-
-<!--READINGS:{"chlorine":0,"totalChlorine":0.5,"ph":6.8,"alkalinity":60,"hardness":100,"cyanuric":0,"confidence":{"chlorine":95,"totalChlorine":80,"ph":90,"alkalinity":75,"hardness":85,"cyanuric":85}}-->`);
+  var resp = '';
+  resp += 'I see your test strip! Here\'s what I\'m reading:\n\n';
+  resp += '**Free Chlorine:** 0 ppm — critically low, pool is not sanitized\n';
+  resp += '**Total Chlorine:** 0.5 ppm\n';
+  resp += '**pH:** 6.8 — too acidic, below ideal range\n';
+  resp += '**Total Alkalinity:** 60 ppm — low, pH will be unstable\n';
+  resp += '**Calcium Hardness:** 100 ppm — low, water may corrode surfaces\n';
+  resp += '**Cyanuric Acid (CYA):** 0 ppm — no stabilizer at all, chlorine will burn off immediately\n\n';
+  resp += 'This strip shows a pool that needs several corrections before it\'s safe to swim. ';
+  resp += 'Chlorine is at zero so there\'s no sanitation happening. ';
+  resp += 'The pH is acidic at 6.8 which can be corrosive. ';
+  resp += 'Your alkalinity is low which is why pH keeps dropping. ';
+  resp += 'And zero CYA means any chlorine you add will vanish in a few hours of sunlight.\n\n';
+  resp += 'Let\'s tackle these one at a time — start with getting alkalinity up to stabilize pH, ';
+    resp += 'add some CYA to protect your chlorine, then bring chlorine up to a safe level.\n\n';
+    resp += '<!--' + 'READINGS:{"chlorine":0,"totalChlorine":0.5,"ph":6.8,"alkalinity":60,"hardness":100,"cyanuric":0,"confidence":{"chlorine":95,"totalChlorine":80,"ph":90,"alkalinity":75,"hardness":85,"cyanuric":85}}' + '-->';
+  S.messages.push({role:'assistant',content:resp});
   render();
-  setTimeout(()=>$('bottom')?.scrollIntoView({behavior:'smooth'}),50);
+  setTimeout(function(){$('bottom')?.scrollIntoView({behavior:'smooth'});},50);
 }
 
 function renderChat(b){
