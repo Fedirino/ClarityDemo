@@ -1,0 +1,2483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Clarity — Pool Co-Pilot (Demo)</title>
+<meta name="theme-color" content="#0b1a26">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Clarity">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%230d7390'/%3E%3Cg fill='none' stroke-linecap='round'%3E%3Cpath d='M2.6 13 q3.35 -3.5 6.7 0 t6.7 0 t6.7 0 t6.7 0' stroke='%23eafcfb' stroke-width='2.1'/%3E%3Cpath d='M2.6 19 q3.35 -3.5 6.7 0 t6.7 0 t6.7 0 t6.7 0' stroke='%23aef2ee' stroke-width='2.1' opacity='0.82'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600&family=DM+Sans:wght@400;500;600&family=DM+Mono&display=swap');
+:root{
+  --bg:#0b1a26; --bg2:#081420; --panel:rgba(255,255,255,.045); --panel2:rgba(255,255,255,.07);
+  --line:rgba(255,255,255,.08); --line2:rgba(120,200,225,.22);
+  --txt:rgba(255,255,255,.9); --mut:rgba(255,255,255,.42); --mut2:rgba(255,255,255,.24);
+  --aqua:#5bc6dc; --aqua2:#7fe3e0; --green:#5cc8a0; --coral:#ec8a72; --amber:#e8b96a;
+  --teal1:#1a9a82; --teal2:#0d7390;
+  --shadow:0 22px 60px -24px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+html,body{height:100%}
+body{
+  background:
+    radial-gradient(1100px 520px at 78% -8%,rgba(91,198,220,.16),transparent 60%),
+    radial-gradient(800px 480px at -8% 112%,rgba(26,154,130,.14),transparent 58%),
+    linear-gradient(165deg,var(--bg2),var(--bg));
+  color:var(--txt);font-family:'DM Sans',system-ui,sans-serif;overflow:hidden;
+}
+textarea:focus,input:focus,select:focus{outline:none}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
+.app{height:100vh;height:100dvh;display:flex;flex-direction:column}
+.mono{font-family:'DM Mono',monospace}.serif{font-family:'Playfair Display',serif}
+
+/* header */
+.hd{padding:max(16px,env(safe-area-inset-top)) 20px 0;flex-shrink:0;
+  background:linear-gradient(180deg,rgba(8,20,32,.9),transparent);
+  border-bottom:1px solid var(--line);backdrop-filter:blur(10px)}
+.hdin{max-width:660px;margin:0 auto}
+.hrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.logo{display:flex;align-items:center;gap:11px}
+.logo .ic{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--teal1),var(--teal2));
+  display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 6px 18px -4px rgba(13,115,144,.6)}
+.logo .ti{font-size:21px;color:#fff;letter-spacing:.5px;line-height:1}
+.logo .sub{font-size:9px;color:var(--mut2);letter-spacing:2.5px;text-transform:uppercase;margin-top:3px}
+.demo-badge{display:inline-block;background:#e8b96a;color:#0b1a26;font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 6px;border-radius:4px;margin-left:6px;vertical-align:middle}
+.gear{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:7px 13px;color:var(--mut);font-size:11px;cursor:pointer;transition:.2s}
+.gear:hover{color:var(--txt);border-color:var(--line2)}
+
+/* tab pills */
+.rowwrap{display:flex;justify-content:center;padding-bottom:14px}
+.tabs{display:flex;gap:4px;background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:13px;padding:4px;width:max-content;max-width:100%;overflow-x:auto}
+.tab{position:relative;overflow:hidden;z-index:0;background:none;border:none;cursor:pointer;padding:8px 16px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--mut2);border-radius:9px;transition:.22s;white-space:nowrap;font-family:'DM Mono',monospace}
+.tab span{position:relative;z-index:2}
+.tab.on{color:#06222c;box-shadow:0 6px 16px -6px var(--aqua)}
+.tab .wv{position:absolute;left:0;bottom:0;width:200%;height:100%;z-index:1;animation:wvflow 4s linear infinite}
+.tab:not(.on):hover{color:var(--txt)}
+@keyframes wvflow{to{transform:translateX(-50%)}}
+.tabwrap{display:flex;justify-content:center;padding-bottom:14px}
+
+.setup{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px;margin-bottom:12px;animation:fadeIn .25s;max-height:60vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.setup .lab{font-size:10px;color:var(--mut);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:9px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 12px;color:var(--mut);font-size:11px;cursor:pointer;transition:.2s;font-family:'DM Mono',monospace}
+.chip.on{background:rgba(91,198,220,.16);border-color:var(--aqua);color:var(--aqua)}
+.hint{font-size:10.5px;color:var(--mut2);margin-top:8px;line-height:1.55}
+
+.body{flex:1;overflow-y:auto;padding:18px 20px;-webkit-overflow-scrolling:touch}
+.bin{max-width:660px;margin:0 auto}
+
+/* chat */
+.msg{display:flex;margin:7px 0;animation:fadeIn .3s}
+.msg.u{justify-content:flex-end}
+.av{width:29px;height:29px;border-radius:50%;background:linear-gradient(135deg,var(--teal1),var(--teal2));display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;margin-right:9px;margin-top:2px;box-shadow:0 4px 12px -4px rgba(13,115,144,.6)}
+.bub{max-width:80%;padding:12px 15px;font-size:14px;line-height:1.62;white-space:pre-wrap}
+.bub.a{background:var(--panel2);border:1px solid var(--line);border-radius:5px 17px 17px 17px}
+.bub.u{background:linear-gradient(135deg,#1c5170,#103b56);border:1px solid rgba(91,198,220,.22);border-radius:17px 5px 17px 17px}
+.dots{display:flex;gap:5px;padding:14px 17px;background:var(--panel2);border:1px solid var(--line);border-radius:5px 17px 17px 17px}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--mut);animation:bounce 1.2s ease-in-out infinite}
+.sugg{margin-top:18px}
+.sugg .h{font-size:10px;color:var(--mut2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:9px}
+.sg{display:block;width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:11px 15px;color:var(--mut);font-size:13px;cursor:pointer;margin-bottom:7px;font-family:inherit;transition:.2s}
+.sg:hover{color:var(--txt);border-color:var(--line2);transform:translateX(3px)}
+
+/* generic cards / forms */
+.sec{display:flex;align-items:center;gap:10px;margin:2px 0 14px}
+.sec h2{font-size:15px;font-weight:600;letter-spacing:.3px}
+.sec .ln{flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+.sec .add{background:var(--panel2);border:1px solid var(--line2);color:var(--aqua);border-radius:10px;padding:7px 13px;font-size:12px;font-weight:600;cursor:pointer;transition:.2s;font-family:inherit}
+.sec .add:hover{background:var(--aqua);color:var(--bg)}
+
+.formcard{background:var(--panel2);border:1px solid var(--line);border-radius:18px;padding:19px;margin-bottom:14px;box-shadow:var(--shadow)}
+.formcard h3{font-size:13px;margin-bottom:15px;display:flex;align-items:center;gap:8px;letter-spacing:.3px}
+.inrow{display:flex;align-items:center;gap:12px;margin-bottom:11px}
+.inrow label{flex:1;font-size:13px}
+.inrow .rng{font-size:10px;color:var(--mut2);font-family:'DM Mono',monospace}
+.inrow input{width:92px;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:9px;padding:9px 11px;color:var(--txt);font-size:16px;text-align:right;font-family:'DM Mono',monospace;transition:.2s}
+.inrow input:focus{border-color:var(--aqua)}
+.btn{border:none;border-radius:12px;padding:12px 16px;font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;transition:.2s}
+.btn.go{background:linear-gradient(135deg,var(--teal1),var(--teal2));color:#fff;width:100%;box-shadow:0 8px 22px -10px var(--teal2)}
+.btn.go:hover{filter:brightness(1.08)}
+.dose{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:16px;margin-bottom:10px;animation:fadeIn .3s}
+.dose .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.dose .nm{font-size:13.5px;font-weight:600}
+.dose .badge{font-size:9px;padding:2px 8px;border-radius:5px;letter-spacing:1px;font-family:'DM Mono',monospace}
+.dose .amt{font-size:21px;font-family:'Playfair Display',serif;color:var(--aqua2);margin:5px 0}
+.dose .ex{font-size:12px;color:var(--mut);line-height:1.55}
+
+.hcard{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:15px 16px;margin-bottom:10px;animation:fadeIn .3s}
+.hcard .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px}
+.hcard .ts{font-size:11px;color:var(--mut);font-family:'DM Mono',monospace}
+.hcard .fl{font-size:10px;padding:3px 9px;border-radius:5px;font-family:'DM Mono',monospace}
+.h5{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.h5 .c{text-align:center}
+.h5 .ck{font-size:9px;color:var(--mut2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+.h5 .cv{font-size:16px;font-weight:600;font-family:'Playfair Display',serif}
+
+/* schedule */
+.task{display:flex;align-items:center;gap:13px;background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:14px 15px;margin-bottom:10px;animation:fadeIn .3s;transition:.2s}
+.task:hover{border-color:var(--line2)}
+.task .cb{width:25px;height:25px;border-radius:8px;border:2px solid var(--line2);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--bg);transition:.2s}
+.task.done .cb{background:var(--green);border-color:var(--green)}
+.task .tx{flex:1;min-width:0;cursor:pointer}
+.task .tt{font-size:14px;font-weight:500}
+.task.done .tt{text-decoration:line-through;color:var(--mut)}
+.task .fr{font-size:11px;color:var(--mut2);font-family:'DM Mono',monospace;margin-top:1px}
+.task .due{font-size:10px;padding:4px 10px;border-radius:20px;font-family:'DM Mono',monospace;letter-spacing:.5px;white-space:nowrap}
+.task .del{background:none;border:none;color:var(--mut2);font-size:16px;cursor:pointer;padding:2px 4px;transition:.2s;flex-shrink:0}
+.task .del:hover{color:var(--coral)}
+
+.empty{text-align:center;padding:60px 0;color:var(--mut2)}
+.empty .e{font-size:32px;margin-bottom:12px}
+
+/* modal */
+.scrim{position:fixed;inset:0;background:rgba(4,12,18,.72);backdrop-filter:blur(5px);z-index:60;display:none;align-items:flex-end;justify-content:center;padding:0}
+.scrim.on{display:flex;animation:fadeIn .25s}
+.modal{background:linear-gradient(165deg,#10283a,#0b1a26);border:1px solid var(--line2);border-top-left-radius:24px;border-top-right-radius:24px;
+  padding:24px 22px max(24px,env(safe-area-inset-bottom));width:100%;max-width:660px;box-shadow:var(--shadow);animation:slideUp .3s cubic-bezier(.2,.8,.2,1)}
+@keyframes slideUp{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+.modal .grab{width:38px;height:4px;border-radius:3px;background:rgba(255,255,255,.18);margin:-6px auto 16px}
+.modal h2{font-size:18px;margin-bottom:18px;letter-spacing:.3px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:7px}
+.field input,.field select{width:100%;background:rgba(0,0,0,.28);border:1px solid var(--line);color:var(--txt);border-radius:11px;padding:11px 13px;font-size:15px;font-family:inherit}
+.field input:focus,.field select:focus{border-color:var(--aqua)}
+.row2{display:grid;grid-template-columns:1.4fr 1fr;gap:11px}
+.mact{display:flex;gap:10px;margin-top:20px}
+.mact button{flex:1;padding:12px;border-radius:12px;font-weight:600;font-size:14px;cursor:pointer;border:0;font-family:inherit}
+.ghost{background:var(--panel2);color:var(--txt);border:1px solid var(--line)!important}
+.solid{background:linear-gradient(135deg,var(--teal1),var(--teal2));color:#fff}
+
+/* input bar */
+.inbar{padding:12px 16px max(20px,env(safe-area-inset-bottom));border-top:1px solid var(--line);background:rgba(8,20,32,.85);backdrop-filter:blur(10px);flex-shrink:0}
+.inbarin{max-width:660px;margin:0 auto;display:flex;gap:8px;align-items:flex-end}
+.photobtn{width:46px;height:46px;border-radius:13px;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;flex-shrink:0;transition:.2s}
+.photobtn:hover{border-color:var(--line2)}
+.txtwrap{flex:1;background:var(--panel2);border:1px solid var(--line);border-radius:15px;padding:10px 14px;display:flex;align-items:flex-end;gap:8px;transition:.2s}
+.txtwrap:focus-within{border-color:var(--line2)}
+.txtwrap textarea{flex:1;background:none;border:none;color:var(--txt);font-size:16px;font-family:inherit;resize:none;line-height:1.5;max-height:100px}
+.send{width:33px;height:33px;border-radius:9px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;background:rgba(255,255,255,.05);color:var(--mut);transition:.2s}
+.send.live{background:linear-gradient(135deg,var(--teal1),var(--teal2));color:#fff}
+.foot{max-width:660px;margin:7px auto 0;font-size:10px;color:var(--mut2);text-align:center;font-family:'DM Mono',monospace}
+
+/* image attachment */
+.attach-preview{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--panel2);border:1px solid var(--line2);border-radius:13px;margin-bottom:8px;animation:fadeIn .2s}
+.attach-preview img{width:56px;height:56px;object-fit:cover;border-radius:10px;border:1px solid var(--line)}
+.attach-preview .attach-info{flex:1;min-width:0}
+.attach-preview .attach-label{font-size:12px;color:var(--txt);margin-bottom:4px}
+.attach-preview .attach-hint{font-size:10px;color:var(--mut2);line-height:1.4}
+.attach-preview .attach-rm{background:none;border:1px solid rgba(236,138,114,.3);color:var(--coral);border-radius:8px;padding:5px 10px;font-size:10px;cursor:pointer;font-family:inherit;transition:.2s}
+.attach-preview .attach-rm:hover{background:rgba(236,138,114,.15)}
+.msg-img{max-width:220px;max-height:180px;border-radius:12px;margin-bottom:6px;border:1px solid var(--line);object-fit:cover}
+
+.gauge{position:relative;height:6px;background:rgba(255,255,255,.08);border-radius:3px;margin-top:9px}
+.gauge .ideal{position:absolute;height:100%;background:rgba(92,200,160,.22);border-radius:3px}
+.gauge .pin{position:absolute;top:-4px;width:14px;height:14px;border-radius:50%;border:2px solid var(--bg);transform:translateX(-7px)}
+
+/* chat results card */
+.rcard{background:var(--panel2);border:1px solid var(--line2);border-radius:16px;padding:16px;margin-top:10px;animation:fadeIn .3s}
+.rcard-hdr{display:flex;align-items:center;gap:8px;margin-bottom:13px}
+.rcard-hdr .rcard-icon{font-size:18px}
+.rcard-hdr .rcard-title{font-size:11px;color:var(--aqua);letter-spacing:1.5px;text-transform:uppercase;font-family:'DM Mono',monospace}
+.rcard-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.rcard-param{background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:11px;padding:10px 8px;text-align:center}
+.rcard-param .rp-label{font-size:9px;color:var(--mut2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;font-family:'DM Mono',monospace}
+.rcard-param .rp-value{font-size:20px;font-weight:600;font-family:'Playfair Display',serif;margin-bottom:3px}
+.rcard-param .rp-badge{display:inline-block;font-size:8px;padding:2px 7px;border-radius:4px;letter-spacing:1px;font-family:'DM Mono',monospace;font-weight:600}
+.rcard-param .rp-conf{font-size:9px;margin-top:3px;font-family:'DM Mono',monospace;letter-spacing:.5px;opacity:.85}
+.rcard-conf-note{font-size:10.5px;color:var(--mut);line-height:1.45;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 11px;margin-bottom:10px}
+.rcard-dose{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:8px}
+.rcard-dose .rd-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.rcard-dose .rd-name{font-size:12.5px;font-weight:600}
+.rcard-dose .rd-badge{font-size:8px;padding:2px 7px;border-radius:4px;letter-spacing:1px;font-family:'DM Mono',monospace}
+.rcard-dose .rd-amt{font-size:17px;font-family:'Playfair Display',serif;color:var(--aqua2);margin:4px 0}
+.rcard-dose .rd-ex{font-size:11px;color:var(--mut);line-height:1.5}
+.rcard-save{width:100%;margin-top:10px;background:linear-gradient(135deg,var(--teal1),var(--teal2));color:#fff;border:none;border-radius:11px;padding:11px;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;transition:.2s;box-shadow:0 6px 18px -8px var(--teal2)}
+.rcard-save:hover{filter:brightness(1.1)}
+.rcard-save:disabled{opacity:.4;cursor:default;filter:none}
+.rcard-ok{text-align:center;padding:10px 0 4px;color:var(--green);font-size:13px}
+.ver-tag{font-size:9px;color:var(--mut2);font-family:'DM Mono',monospace;letter-spacing:1px;opacity:.6}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hd"><div class="hdin">
+    <div class="hrow">
+      <div class="logo">
+        <div class="ic"><svg width="22" height="13" viewBox="0 0 48 26" aria-label="Clarity"><path d="M2 8 q6 -7 12 0 t12 0 t12 0 t12 0" fill="none" stroke="#eafcfb" stroke-width="3" stroke-linecap="round"/><path d="M2 17 q6 -7 12 0 t12 0 t12 0 t12 0" fill="none" stroke="#aef2ee" stroke-width="3" stroke-linecap="round" opacity=".7"/></svg></div>
+        <div><div class="ti serif">Clarity</div><div class="sub">Pool Co-Pilot <span class="demo-badge">Demo</span></div></div>
+      </div>
+      <button class="gear mono" id="gearBtn">⚙ <span id="gLabel">15,000g</span></button>
+    </div>
+    <div id="setup" style="display:none"></div>
+    <div class="tabwrap"><div class="tabs" id="tabs"></div></div>
+  </div></div>
+
+    <div class="body" id="body"></div>
+
+  <div class="inbar" id="inbar">
+    <div class="inbarin" style="flex-direction:column;align-items:stretch">
+      <div id="attachPreview"></div>
+      <div style="display:flex;gap:8px;align-items:flex-end">
+      <label class="photobtn" id="camBtn" title="Take a photo">📷</label>
+      <label class="photobtn" id="uploadBtn" title="Upload a photo">📁</label>
+      <input id="fileIn" type="file" accept="image/*" capture="environment" style="display:none">
+      <input id="uploadIn" type="file" accept="image/*" style="display:none">
+      <div class="txtwrap">
+        <textarea id="msgIn" rows="1" placeholder="Ask anything about your pool…"></textarea>
+        <button class="send" id="sendBtn">↑</button>
+      </div>
+      </div>
+    </div>
+    <div class="foot">📷 snap or 📁 upload a photo · Enter to send · <span class="ver-tag">v4.4.1</span></div>
+  </div>
+</div>
+
+<!-- sign-in gate (skipped in demo) -->
+<div id="authGate" style="display:none"></div>
+
+<!-- Demo mode -->
+
+<!-- task editor -->
+<div class="scrim" id="taskScrim">
+  <div class="modal">
+    <div class="grab"></div>
+    <h2 id="tmTitle">New task</h2>
+    <div class="field"><label>Task</label><input id="tName" placeholder="e.g. Backwash the filter"></div>
+    <div class="row2">
+      <div class="field"><label>Frequency label</label><input id="tFreq" placeholder="Weekly"></div>
+      <div class="field"><label>Every (days)</label><input id="tInt" type="number" inputmode="numeric" min="1" value="7"></div>
+    </div>
+    <div class="mact">
+      <button class="ghost" id="tDelete" style="display:none;flex:0 0 auto;padding-left:18px;padding-right:18px;color:var(--coral)">Delete</button>
+      <button class="ghost" onclick="closeScrim('taskScrim')">Cancel</button>
+      <button class="solid" id="tSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const IDEAL={
+  chlorine:{min:1,max:3,unit:'ppm',label:'Free Chlorine',short:'FC'},
+  totalChlorine:{min:1,max:3,unit:'ppm',label:'Total Chlorine',short:'TC'},
+  ph:{min:7.2,max:7.6,unit:'',label:'pH',short:'pH'},
+  alkalinity:{min:80,max:120,unit:'ppm',label:'Total Alkalinity',short:'Alk'},
+  hardness:{min:200,max:400,unit:'ppm',label:'Calcium Hardness',short:'Hard'},
+  cyanuric:{min:30,max:50,unit:'ppm',label:'Cyanuric Acid',short:'CYA'},
+};
+const KEYS=Object.keys(IDEAL);
+const color=(v,k)=>{const r=IDEAL[k];if(v==null)return'#5a7a8a';if(v<r.min)return'#5bc6dc';if(v>r.max)return'#ec8a72';return'#5cc8a0';};
+const statusOf=(v,k)=>{const r=IDEAL[k];if(v==null)return null;return v<r.min?'LOW':v>r.max?'HIGH':'OK';};
+
+function doseAdvice(read,gal){
+  const f=gal/10000, out=[];
+  const cl=read.chlorine;
+  if(cl!=null&&cl<IDEAL.chlorine.min){const oz=((IDEAL.chlorine.max-cl)*2*f).toFixed(1);
+    out.push({nm:'Add Chlorine',sev:'low',amt:`${oz} oz cal-hypo (or 1 dose liquid shock)`,
+      ex:`Free chlorine is ${cl} ppm — below the ${IDEAL.chlorine.min} ppm minimum. Add chlorine and retest in 4 hrs.`});}
+  else if(cl!=null&&cl>IDEAL.chlorine.max){out.push({nm:'Lower Chlorine',sev:'high',amt:`Stop chlorinating · wait`,
+      ex:`Free chlorine ${cl} ppm is high. Hold off adding more and let sunlight bring it down before swimming.`});}
+  const tc=read.totalChlorine;
+  if(tc!=null&&cl!=null&&(tc-cl)>0.5){const oz=(10*f).toFixed(0);
+    out.push({nm:'Shock (chloramines)',sev:'high',amt:`${oz} oz cal-hypo / shock`,
+      ex:`Combined chlorine is ${(tc-cl).toFixed(1)} ppm (total ${tc} − free ${cl}). Above 0.5 ppm means chloramines — the stuff that smells "chlorine-y" and stings eyes. Shock the pool to break them up.`});}
+  const ph=read.ph;
+  if(ph!=null&&ph<IDEAL.ph.min){const oz=((IDEAL.ph.min-ph)*48*f).toFixed(0);
+    out.push({nm:'Raise pH',sev:'low',amt:`${oz} oz soda ash (pH up)`,
+      ex:`pH ${ph} is acidic. Add soda ash gradually with the pump running, retest after an hour.`});}
+  else if(ph!=null&&ph>IDEAL.ph.max){const oz=((ph-IDEAL.ph.max)*12*f).toFixed(0);
+    out.push({nm:'Lower pH',sev:'high',amt:`${oz} fl oz muriatic acid`,
+      ex:`pH ${ph} is high — scaling and cloudy water risk. Add acid slowly into a return jet, never the skimmer.`});}
+  const al=read.alkalinity;
+  if(al!=null&&al<IDEAL.alkalinity.min){const lb=(((IDEAL.alkalinity.min-al)/10)*1.5*f).toFixed(1);
+    out.push({nm:'Raise Alkalinity',sev:'low',amt:`${lb} lb baking soda`,
+      ex:`Alkalinity ${al} ppm is low, making pH unstable. Raise it before chasing pH.`});}
+  else if(al!=null&&al>IDEAL.alkalinity.max){out.push({nm:'Lower Alkalinity',sev:'high',amt:`Add acid + aerate`,
+      ex:`Alkalinity ${al} ppm is high. Add muriatic acid in stages and aerate; this also nudges pH down.`});}
+  const hd=read.hardness;
+  if(hd!=null&&hd<IDEAL.hardness.min){const lb=(((IDEAL.hardness.min-hd)/10)*1.25*f).toFixed(1);
+    out.push({nm:'Raise Hardness',sev:'low',amt:`${lb} lb calcium chloride`,
+      ex:`Calcium hardness ${hd} ppm is low — water may corrode surfaces. Add calcium chloride.`});}
+  else if(hd!=null&&hd>IDEAL.hardness.max){out.push({nm:'Lower Hardness',sev:'high',amt:`Partial drain & refill`,
+      ex:`Hardness ${hd} ppm is high (scaling risk). Dilute by draining ~25% and refilling with fresh water.`});}
+  const cy=read.cyanuric;
+  if(cy!=null&&cy<IDEAL.cyanuric.min){const oz=(((IDEAL.cyanuric.min-cy)/10)*13*f).toFixed(0);
+    out.push({nm:'Add Stabilizer',sev:'low',amt:`${oz} oz cyanuric acid`,
+      ex:`CYA ${cy} ppm is low — chlorine burns off fast in sun. Add stabilizer (dissolves slowly).`});}
+  else if(cy!=null&&cy>IDEAL.cyanuric.max){out.push({nm:'Lower Stabilizer',sev:'high',amt:`Partial drain & refill`,
+      ex:`CYA ${cy} ppm is high — it weakens chlorine. The only real fix is diluting with fresh water.`});}
+  return out;
+}
+
+const DEMO_MODE = true;
+const DEMO_READINGS = {
+  chlorine: 1.2, totalChlorine: 1.5, ph: 7.4, alkalinity: 90,
+  hardness: 280, cyanuric: 35
+};
+const DEMO_HISTORY = (() => {
+  const now = Date.now(), day = 864e5;
+  const entries = [
+    {timestamp: now - 0*day, chlorine: 1.2, totalChlorine: 1.5, ph: 7.4, alkalinity: 90, hardness: 280, cyanuric: 35, action: 'Added Chlorine', actionAmt: '4 oz cal-hypo'},
+    {timestamp: now - 3*day, chlorine: 0.8, totalChlorine: 1.1, ph: 7.6, alkalinity: 95, hardness: 275, cyanuric: 35},
+    {timestamp: now - 7*day, chlorine: 2.1, totalChlorine: 2.4, ph: 7.3, alkalinity: 85, hardness: 290, cyanuric: 40, action: 'Shocked', actionAmt: '1 bag shock'},
+    {timestamp: now - 10*day, chlorine: 0.5, totalChlorine: 1.8, ph: 7.0, alkalinity: 80, hardness: 295, cyanuric: 38},
+    {timestamp: now - 14*day, chlorine: 1.8, totalChlorine: 2.0, ph: 7.5, alkalinity: 100, hardness: 285, cyanuric: 42},
+    {timestamp: now - 18*day, chlorine: 2.5, totalChlorine: 2.6, ph: 7.2, alkalinity: 88, hardness: 270, cyanuric: 45},
+    {timestamp: now - 21*day, chlorine: 1.0, totalChlorine: 1.3, ph: 7.8, alkalinity: 110, hardness: 300, cyanuric: 40},
+    {timestamp: now - 25*day, chlorine: 3.0, totalChlorine: 3.2, ph: 7.1, alkalinity: 82, hardness: 285, cyanuric: 35},
+  ];
+  return entries.map(e => { e.gallons = 15000; return e; });
+})();
+
+/* ── No-op placeholders (demo — no Firebase) ── */
+const fbAuth = { signOut:()=>{}, onAuthStateChanged:(cb)=>{cb(null); return ()=>{};} };
+const fbDb = null;
+function cloudDoc(){return null;}
+function cloudPush(){}
+async function cloudHydrate(){}
+function persistLocal(){}
+function persist(){}
+
+/* ── Demo mode: pre-filled app state ── */
+let S={
+  gallons: 15000,
+  history: DEMO_HISTORY,
+  tasks: (()=>{const d=864e5,n=Date.now();return[
+    {id:1,t:'Test water chemistry',freq:'Weekly',int:7,last:n-5*d,done:false},
+    {id:2,t:'Skim surface & empty baskets',freq:'2–3× weekly',int:3,last:n-d,done:false},
+    {id:3,t:'Brush walls & vacuum',freq:'Weekly',int:7,last:n-8*d,done:false},
+    {id:4,t:'Clean skimmer & pump basket',freq:'Weekly',int:7,last:n-4*d,done:false},
+    {id:5,t:'Shock the pool',freq:'Bi-weekly',int:14,last:n-12*d,done:false},
+    {id:6,t:'Check & backwash filter',freq:'Monthly',int:30,last:n-20*d,done:false},
+    {id:7,t:'Inspect equipment & water level',freq:'Weekly',int:7,last:n-6*d,done:false},
+  ];})(),
+  poolNotes: 'Inground pool, lots of trees nearby, recently replastered.',
+  notifyTime: '10:00',
+  poolProfile: {
+    type:'Chlorine', surface:'Plaster', filter:'Sand', climate:'Temperate',
+    sun:'Partial Shade', water:'City/Municipal', usage:'Few times/week',
+    equipment:['Heater','Cover','Robot Cleaner'], location:'Phoenix, AZ',
+    lat:33.4484, lon:-112.0740, locLabel:'Phoenix, AZ (for demo)'
+  },
+  poolModel: (()=>{
+    const m={version:3,enabled:true,createdAt:Date.now(),updatedAt:Date.now(),beliefs:[],openQuestions:[],predictions:[],observations:[]};
+    m.beliefs=[
+      {id:'fc-decay',icon:'📉',label:'Chlorine decay',claim:'Free chlorine drops about 0.41 ppm/day',confidence:72,evidence:'6 chlorine-free intervals',detail:'spread 0.25–0.55 ppm/day · consistency 68%'},
+      {id:'ph-drift',icon:'📈',label:'pH behavior',claim:'pH tends to rise ~0.08/week',confidence:65,evidence:'8 pH readings',detail:'direction consistency 75%'}
+    ];
+    m.observations=[{text:'Pool has noticeable chlorine demand after heavy swim days',ts:Date.now()-864e5*3},{text:'pH drifts up after rain',ts:Date.now()-864e5*7}];
+    return m;
+  })(),
+  messages:[{role:'assistant',content:"Hi! I'm Clarity, your personal pool co-pilot.\n\nThis is a **demo** — data is pre-loaded so you can explore the full app without signing in or adding an API key.\n\n📷 Want to try scanning a real strip? Go ahead and upload a photo — I'll give you sample readings back.\n\nI learn your pool's patterns over time and give advice specific to YOUR pool — not generic tips."}],
+  tab:'dash', thinking:false, setupOpen:false, editTask:null,
+  _pendingImage:null,
+};
+/* ── Cache in localStorage so subsiquent visits keep the demo state ── */
+(function(){try{const k='clarity-';['gallons','history','tasks','poolNotes','poolProfile','poolModel'].forEach(key=>{
+  if(!localStorage.getItem(k+key))localStorage.setItem(k+key,JSON.stringify(S[key]));
+});}catch(e){}})();
+
+/* ── Task notifications
+   local/PWA reminders that work when Clarity is open or installed, after the
+   user grants notification permission. A backend push channel can come later. ── */
+const TASK_NOTIFY_KEY='clarity-task-notified-v1';
+let _notifyTimer=null;
+let _swReg=null;
+function loadTaskNotified(){try{return JSON.parse(localStorage.getItem(TASK_NOTIFY_KEY)||'{}')||{};}catch(e){return {};}}
+function saveTaskNotified(v){localStorage.setItem(TASK_NOTIFY_KEY,JSON.stringify(v));}
+function taskNotifyMinutes(){
+  const [h,m]=(S.notifyTime||'10:00').split(':').map(n=>Number(n));
+  return [Number.isFinite(h)?h:10, Number.isFinite(m)?m:0];
+}
+function taskDueAt(t){
+  const base=Number(t?.last)||0;
+  const interval=Number(t?.int)||7;
+  const due=new Date(base+interval*864e5);
+  const [h,m]=taskNotifyMinutes();
+  due.setHours(h,m,0,0);
+  return due.getTime();
+}
+
+function taskNotifyKey(t){return `${t.id}:${taskDueAt(t)}`;}
+function taskNotifyState(){return ('Notification' in window)?Notification.permission:'unsupported';}
+function taskNotificationLabel(){const p=taskNotifyState();return p==='granted'?'On':'Blocked';}
+function taskNotificationHint(){const p=taskNotifyState();
+  if(p==='granted')return `Clarity will notify you automatically at ${S.notifyTime||'10:00'} on the day a task is due.`;
+  if(p==='denied')return 'Notifications are blocked in this browser. You can re-enable them in browser/site settings, then reload Clarity.';
+  return 'Clarity can use browser notifications for scheduled tasks.';
+}
+
+async function ensureTaskNotificationSupport(){
+  if(!('Notification' in window))return 'unsupported';
+  if(Notification.permission==='default'){
+    try{await Notification.requestPermission();}catch(e){}
+  }
+  if('serviceWorker' in navigator){
+    try{_swReg=await navigator.serviceWorker.register('/sw.js');}
+    catch(e){console.warn('Task notification service worker registration failed:',e.message);}
+  }
+  renderSetup();
+  checkTaskNotifications(true);
+  return Notification.permission;
+}
+function showTaskNotification(task,kind){
+  if(taskNotifyState()!=='granted')return;
+  const dueAt=taskDueAt(task);
+  const when=new Date(dueAt).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  const title=kind==='test'?'Clarity test notification':'Clarity task due';
+  const body=kind==='test'
+    ?'If you can see this, scheduled task notifications are working.'
+    :`${task.t} is due at ${S.notifyTime||'10:00'} today (${when}).`;
+  const data={url:`${location.origin}${location.pathname}#schedule`,taskId:task?.id||null,kind};
+  if(_swReg&&_swReg.showNotification){
+    _swReg.showNotification(title,{body,tag:`clarity-task-${task?.id||'test'}`,renotify:true,icon:'/icon-192.png',badge:'/icon-192.png',data});
+  }else if('Notification' in window){
+    new Notification(title,{body,tag:`clarity-task-${task?.id||'test'}`});
+  }
+}
+function checkTaskNotifications(force=false){
+  if(taskNotifyState()!=='granted')return;
+  const seen=loadTaskNotified();
+  const now=Date.now();
+  let changed=false;
+  S.tasks.forEach(t=>{
+    if(!t||t.done)return;
+    const dueAt=taskDueAt(t);
+    const key=taskNotifyKey(t);
+    if(now>=dueAt&&seen[key]!==true){
+      showTaskNotification(t,'due');
+      seen[key]=true;
+      changed=true;
+    }
+  });
+  if(changed)saveTaskNotified(seen);
+  if(force)renderSetup();
+}
+function promptTaskNotifications(){
+  if(!('Notification' in window))return;
+  if(Notification.permission==='granted'){
+    ensureTaskNotificationSupport();
+    return;
+  }
+  ensureTaskNotificationSupport();
+}
+function sendTaskNotificationTest(){
+  const sample=S.tasks.find(t=>!t.done)||{id:'test',t:'Sample scheduled task',last:Date.now(),int:1,done:false};
+  if(taskNotifyState()!=='granted'){
+    promptTaskNotifications();
+    return;
+  }
+  showTaskNotification(sample,'test');
+}
+function scheduleTaskNotificationChecks(){
+  clearInterval(_notifyTimer);
+  _notifyTimer=setInterval(()=>checkTaskNotifications(),60e3);
+}
+function syncTaskNotificationState(){
+  if('Notification' in window && Notification.permission==='granted'){
+    ensureTaskNotificationSupport();
+  }
+}
+
+const $=id=>document.getElementById(id);
+const TABS=[['dash','Dashboard'],['chat','Chat'],['chem','Chemistry'],['history','History'],['schedule','Schedule']];
+
+const WAVE=`<svg class="wv" viewBox="0 0 120 40" preserveAspectRatio="none"><path d="M0 12 Q15 3 30 12 T60 12 T90 12 T120 12 V40 H0 Z" fill="#5bc6dc"/><path d="M0 12 Q15 3 30 12 T60 12 T90 12 T120 12" fill="none" stroke="#aef2ee" stroke-width="2" opacity=".8"/></svg>`;
+const AV=`<svg width="20" height="20" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 6C20 6 9 17 9 25a11 11 0 0 0 22 0C31 17 20 6 20 6Z" fill="#eafcfb"/><circle cx="15" cy="20" r="3.6" fill="#cdeff2" stroke="#0d7390" stroke-width="1.6"/><circle cx="25" cy="20" r="3.6" fill="#cdeff2" stroke="#0d7390" stroke-width="1.6"/><path d="M18.6 20h2.8" stroke="#0d7390" stroke-width="1.6"/><path d="M14 27q6 3 12 0" fill="none" stroke="#0d7390" stroke-width="1.8" stroke-linecap="round"/></svg>`;
+function renderTabs(){
+  $('tabs').innerHTML=TABS.map(([k,l])=>{
+    const c=k==='history'&&S.history.length?` ${S.history.length}`:'';
+    const on=S.tab===k;
+    return `<button class="tab ${on?'on':''}" data-tab="${k}">${on?WAVE:''}<span>${l}${c}</span></button>`;
+  }).join('');
+  $('tabs').querySelectorAll('.tab').forEach(b=>b.onclick=()=>{S.tab=b.dataset.tab;render()});
+  $('gLabel').textContent=S.gallons.toLocaleString()+'g';
+  $('inbar').style.display=S.tab==='chat'?'block':'none';
+}
+function renderSetup(){
+  const el=$('setup');
+  if(!S.setupOpen){el.style.display='none';return;}
+  el.style.display='block';
+  const P=S.poolProfile;
+  const profileComplete=[P.type,P.surface,P.filter,P.climate,P.sun,P.water,P.usage].filter(Boolean).length;
+  const pct=Math.round(profileComplete/7*100);
+  const chipSet=(field,options,multi)=>options.map(o=>{
+    const on=multi?(P[field]||[]).includes(o):P[field]===o;
+    return `<button class="chip ${on?'on':''}" data-field="${field}" data-val="${o}" data-multi="${multi||''}">${o}</button>`;
+  }).join('');
+
+  el.innerHTML=`
+    <div class="setup">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-size:14px;font-weight:600;letter-spacing:.3px">🏊 Pool Profile</div>
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="font-size:10px;color:${pct===100?'var(--green)':'var(--mut2)'};font-family:'DM Mono',monospace">${pct}%</div>
+          <button id="closeSetup" style="background:none;border:1px solid var(--line);border-radius:8px;color:var(--mut);font-size:14px;cursor:pointer;padding:2px 8px;transition:.2s">✕</button>
+        </div>
+      </div>
+      ${pct<100?'<div class="hint" style="margin-bottom:14px;color:var(--aqua)">Fill out your pool profile so Clarity can give advice specific to YOUR pool — not generic tips.</div>':''}
+
+      <div class="lab">Pool size (gallons)</div>
+      <div class="chips">${[5000,8000,10000,12000,15000,20000,25000,30000].map(g=>
+        `<button class="chip ${S.gallons===g?'on':''}" data-g="${g}">${g>=1000?(g/1000)+'k':g}</button>`).join('')}</div>
+
+      <div class="lab">Sanitizer type</div>
+      <div class="chips">${chipSet('type',['Chlorine','Salt','Mineral','Bromine'])}</div>
+
+      <div class="lab">Surface</div>
+      <div class="chips">${chipSet('surface',['Plaster','Vinyl','Fiberglass','Pebble/Aggregate'])}</div>
+
+      <div class="lab">Filter</div>
+      <div class="chips">${chipSet('filter',['Sand','Cartridge','DE'])}</div>
+
+      <div class="lab">Climate</div>
+      <div class="chips">${chipSet('climate',['Hot & Dry','Hot & Humid','Temperate','Cold/Seasonal'])}</div>
+
+      <div class="lab">Sun exposure</div>
+      <div class="chips">${chipSet('sun',['Full Sun','Partial Shade','Mostly Shade'])}</div>
+
+      <div class="lab">Water source</div>
+      <div class="chips">${chipSet('water',['City/Municipal','Well'])}</div>
+
+      <div class="lab">Usage</div>
+      <div class="chips">${chipSet('usage',['Daily','Few times/week','Weekends only','Seasonal'])}</div>
+
+      <div class="lab">Equipment <span style="color:var(--mut2);text-transform:none;letter-spacing:0">(select all that apply)</span></div>
+      <div class="chips">${chipSet('equipment',['Heater','Salt Cell','Automation','Cover','UV/Ozone','Robot Cleaner'],true)}</div>
+
+      <div style="margin-top:16px"><div class="lab">Location <span style="color:var(--mut2);text-transform:none;letter-spacing:0">(for weather alerts)</span></div>
+      <input id="locInput" type="text" value="${esc(P.location||'')}" placeholder="City, State or ZIP — e.g. Austin, TX" style="width:100%;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:11px;padding:10px 12px;color:var(--txt);font-size:13px;font-family:inherit">
+      ${P.locLabel?`<div class="hint" style="color:var(--green)">📍 ${esc(P.locLabel)} — Clarity will watch heat, UV and rain for you.</div>`:(S._wxErr&&P.lat==null?`<div class="hint" style="color:var(--coral)">${esc(S._wxErr)}</div>`:`<div class="hint">Clarity uses this only to fetch the local forecast (heat & UV burn off chlorine; rain throws off balance).</div>`)}</div>
+
+      <div style="margin-top:16px"><div class="lab">Pool notes & conditions</div>
+      <textarea id="poolNotesInput" style="width:100%;min-height:70px;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:11px;padding:10px 12px;color:var(--txt);font-size:13px;font-family:inherit;resize:vertical;line-height:1.5" placeholder="Anything else Clarity should know — e.g. 'has a slow leak', 'recently replastered', 'lots of trees nearby'…">${esc(S.poolNotes)}</textarea>
+      <div class="hint">These notes are sent to Clarity with every message so it understands your pool's ongoing situation.</div></div>
+
+      <div style="margin-top:16px">
+        <div class="lab">Scheduled-item notifications</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px">
+          <button id="notifyToggle" class="chip" style="padding:7px 12px">🔔 On</button>
+          <button id="notifyTest" class="chip" style="padding:7px 12px">Test</button>
+          <div style="flex:1 1 140px;display:flex;align-items:center;gap:8px">
+            <label for="notifyTime" style="font-size:11px;color:var(--mut2);text-transform:uppercase;letter-spacing:1px">At</label>
+            <input id="notifyTime" type="time" value="${esc(S.notifyTime||'10:00')}" style="flex:1;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:11px;padding:7px 10px;color:var(--txt);font-size:13px;font-family:inherit">
+          </div>
+        </div>
+        <div class="hint">Clarity will notify you automatically at ${S.notifyTime||'10:00'} on the day a task is due.</div>
+      </div>
+
+            <div style="margin-top:16px">
+              <div class="lab">🔑 OpenRouter Key <span style="color:var(--mut2);text-transform:none;letter-spacing:0">(for GPT-4o strip scanning)</span></div>
+              <div style="display:flex;gap:6px;align-items:center">
+                <input id="setupOpenKey" type="password" value="${localStorage.getItem('openrouter_key')||''}" placeholder="sk-or-v1-..." style="flex:1;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:11px;padding:8px 10px;color:var(--txt);font-size:12px;font-family:'DM Mono',monospace">
+                <button onclick="localStorage.setItem('openrouter_key',$('setupOpenKey').value.trim());alert('✅ Key saved.')" style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--green);font-size:14px;padding:6px 12px;cursor:pointer">💾</button>
+                <button onclick="localStorage.removeItem('openrouter_key');$('setupOpenKey').value='';alert('✅ Key cleared.')" style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;color:var(--coral);font-size:14px;padding:6px 12px;cursor:pointer">✕</button>
+              </div>
+              <div class="hint">Without a key, Clarity falls back to the built-in model. Saved automatically.</div>
+            </div>
+
+            <div style="margin-top:16px;display:flex;justify-content:space-between;align-items:center">
+                    <span style="font-size:9px;color:var(--mut2);font-family:'DM Mono',monospace;text-align:right;letter-spacing:1px">Clarity Demo · v4.4.1</span>
+                  </div>
+    </div>`;
+
+  // Gallon chips
+  el.querySelectorAll('.chip[data-g]').forEach(c=>c.onclick=()=>{S.gallons=+c.dataset.g;persist();renderSetup();renderTabs();render()});
+
+  // Profile chips
+  el.querySelectorAll('.chip[data-field]').forEach(c=>c.onclick=()=>{
+    const f=c.dataset.field, v=c.dataset.val, multi=c.dataset.multi;
+    if(multi){
+      const arr=P[f]||[];
+      if(arr.includes(v))P[f]=arr.filter(x=>x!==v);
+      else P[f]=[...arr,v];
+    }else{
+      P[f]=P[f]===v?null:v; // tap again to deselect
+    }
+    persist();renderSetup();
+  });
+
+  // Location (weather) — geocode on change/enter
+  const locEl=$('locInput');
+  if(locEl)locEl.onchange=()=>{setPoolLocation(locEl.value);};
+
+  // Notes
+  const notesEl=$('poolNotesInput');
+  if(notesEl)notesEl.onblur=()=>{S.poolNotes=notesEl.value.trim();persist();};
+
+  // Close button
+  const closeBtn=$('closeSetup');
+  if(closeBtn)closeBtn.onclick=()=>{S.setupOpen=false;renderSetup();};
+  const notifyToggle=$('notifyToggle');
+  if(notifyToggle)notifyToggle.onclick=()=>{promptTaskNotifications();};
+  const notifyTest=$('notifyTest');
+  if(notifyTest)notifyTest.onclick=()=>{sendTaskNotificationTest();};
+  const notifyTime=$('notifyTime');
+  if(notifyTime)notifyTime.onchange=()=>{
+    S.notifyTime=notifyTime.value||'10:00';
+    persist();
+    renderSetup();
+    checkTaskNotifications(true);
+  };
+}
+
+function render(){
+  renderTabs();renderSetup();
+  const b=$('body');
+  if(S.tab==='dash')renderDash(b);
+  else if(S.tab==='chat')renderChat(b);
+  else if(S.tab==='chem')renderChem(b);
+  else if(S.tab==='history')renderHistory(b);
+  else if(S.tab==='schedule')renderSchedule(b);
+}
+
+function gaugeHTML(v,k){
+  const r=IDEAL[k],span=r.max-r.min,pmin=r.min-span*.4,pmax=r.max+span*.4;
+  const iL=(r.min-pmin)/(pmax-pmin)*100,iW=(r.max-r.min)/(pmax-pmin)*100;
+  const p=v!=null?Math.max(0,Math.min(100,(v-pmin)/(pmax-pmin)*100)):null;
+  const c=color(v,k);
+  return `<div class="gauge"><div class="ideal" style="left:${iL}%;width:${iW}%"></div>
+    ${p!=null?`<div class="pin" style="left:${p}%;background:${c};box-shadow:0 0 8px ${c}"></div>`:''}</div>`;
+}
+
+function parseReadings(text){
+  const m=text.match(/<!--READINGS:(.*?)-->/s);
+  if(!m)return null;
+  try{
+    const data=JSON.parse(m[1]);
+    const clean=text.replace(/\n?<!--READINGS:.*?-->/s,'').trim();
+    const confidence=data.confidence||null;
+    if(data.confidence)delete data.confidence;
+    return{clean,readings:data,confidence};
+  }catch(e){return null;}
+}
+
+/* ── Phase 3 (v4.0): the action set. Clarity PROPOSES writes in a hidden block;
+   nothing is saved without the owner's confirm tap (a ✓ chip). The app — never the
+   model — performs the write and shows exactly what was done. Reads stay in context;
+   these are the bookkeeping actions Clarity can do FOR you. ── */
+const ACTION_TOOLS={
+  record_action:'Record a dose/treatment',
+  set_reminder:'Set a reminder',
+  update_schedule:'Add a maintenance task',
+  update_profile:'Save a pool fact',
+  record_belief:'Note something about the pool'
+};
+function parseActions(text){
+  const m=text.match(/<!--ACTIONS:(.*?)-->/s);
+  if(!m)return null;
+  try{
+    let acts=JSON.parse(m[1]);
+    if(!Array.isArray(acts))acts=[acts];
+    acts=acts.filter(a=>a&&ACTION_TOOLS[a.tool]).slice(0,4);
+    const clean=text.replace(/\n?<!--ACTIONS:.*?-->/s,'').trim();
+    return acts.length?{clean,actions:acts}:{clean,actions:[]};
+  }catch(e){return null;}
+}
+
+// Void any open free-chlorine forecast — chlorine was just added, so a decay-only
+// forecast can no longer be fairly judged. Keeps the scorecard honest.
+function voidOpenFcForecasts(reason){
+  const pm=S.poolModel;
+  if(!pm||!Array.isArray(pm.predictions))return;
+  pm.predictions.forEach(p=>{
+    if(p.status==='open'&&p.param==='chlorine'){p.status='void';p.verifiedAt=Date.now();p.note=reason||'chlorine added — forecast not applicable';}
+  });
+}
+
+// Execute a confirmed action LOCALLY. Returns a short human summary of what was done.
+function runAction(a){
+  const args=a.args||{};
+  if(a.tool==='record_action'){
+    const action=(args.action||'').trim()||'Nothing';
+    const amt=(args.amount||args.amt||'').toString().trim();
+    const note=(args.note||'').toString().trim();
+    const recent=S.history[0];
+    const fresh=recent&&(Date.now()-recent.timestamp)<6*36e5&&!recent.action; // attach to a reading logged in the last 6h
+    if(fresh){
+      recent.action=action; if(amt)recent.actionAmt=amt; if(note)recent.notes=note;
+    }else{
+      const entry={timestamp:Date.now(),gallons:S.gallons,action,actionAmt:amt,notes:note};
+      KEYS.forEach(k=>entry[k]=null);
+      S.history=[entry,...S.history].slice(0,60);
+    }
+    if(action==='Added Chlorine'||action==='Shocked')voidOpenFcForecasts('you added chlorine — earlier forecast set aside');
+    persist();
+    return `Recorded: ${action}${amt?' · '+amt:''}`;
+  }
+  if(a.tool==='set_reminder'||a.tool==='update_schedule'){
+    const title=(args.title||args.t||'Reminder').toString().trim();
+    const inDays=Number(args.inDays);
+    const int=Number.isFinite(Number(args.int))&&Number(args.int)>0?Number(args.int):(Number.isFinite(inDays)&&inDays>0?inDays:7);
+    const freq=(args.freq||(a.tool==='set_reminder'?'Reminder':'Custom')).toString();
+    const last=Date.now()-(Number.isFinite(inDays)?(int-inDays):0)*864e5; // due in ~inDays (default: a full interval out)
+    const task={id:Date.now()+Math.floor(Math.random()*1000),t:title,freq,int,last,done:false};
+    S.tasks=[...S.tasks,task];
+    persist();
+    return `Added to schedule: “${title}” · due in ~${Math.max(1,Math.round((task.last+int*864e5-Date.now())/864e5))} day(s)`;
+  }
+  if(a.tool==='update_profile'){
+    const P=S.poolProfile;
+    const profFields=['type','surface','filter','climate','sun','water','usage'];
+    const field=(args.field||'').toString().trim();
+    const value=(args.value||'').toString().trim();
+    if(field==='equipment'&&value){P.equipment=Array.isArray(P.equipment)?P.equipment:[];if(!P.equipment.includes(value))P.equipment.push(value);persist();return `Saved equipment: ${value}`;}
+    if(profFields.includes(field)&&value){P[field]=value;persist();return `Saved ${field}: ${value}`;}
+    const note=(args.note||value||'').toString().trim();
+    if(note){S.poolNotes=(S.poolNotes?S.poolNotes.replace(/\s*$/,'')+'\n':'')+note;persist();return `Added to pool notes: ${note.length>60?note.slice(0,57)+'…':note}`;}
+    return 'Nothing to save';
+  }
+  if(a.tool==='record_belief'){
+    const text=(args.observation||args.text||args.claim||'').toString().trim();
+    if(!text)return 'Nothing to note';
+    const pm=S.poolModel; normalizePoolModel();
+    if(!pm.observations.some(o=>o.text===text))pm.observations.unshift({text,ts:Date.now()});
+    pm.observations=pm.observations.slice(0,20);
+    persist();
+    return `Noted: ${text.length>60?text.slice(0,57)+'…':text}`;
+  }
+  return 'Unknown action';
+}
+
+function renderResultsCard(readings,msgIdx,confidence){
+  const doses=doseAdvice(readings,S.gallons);
+  const saved=S._savedMsgs&&S._savedMsgs.has(msgIdx);
+  let h=`<div class="rcard"><div class="rcard-hdr"><span class="rcard-icon">📊</span><span class="rcard-title">Test Strip Results</span></div>`;
+  h+=`<div class="rcard-grid">`;
+  KEYS.forEach(k=>{
+    const v=readings[k];
+    const c=color(v,k);
+    const st=statusOf(v,k);
+    const stColor=st==='OK'?'var(--green)':st==='HIGH'?'var(--coral)':st==='LOW'?'var(--aqua)':'var(--mut2)';
+    h+=`<div class="rcard-param"><div class="rp-label">${IDEAL[k].short}</div>`;
+    h+=`<div class="rp-value" style="color:${v!=null?c:'rgba(255,255,255,.15)'}">${v!=null?v:'—'}</div>`;
+    if(st)h+=`<span class="rp-badge" style="color:${stColor};background:${stColor}1a">${st}</span>`;
+    const cf=confidence&&confidence[k]!=null?confidence[k]:null;
+    if(cf!=null){
+      const cfColor=cf>=70?'var(--green)':cf>=45?'var(--coral)':'var(--mut2)';
+      h+=`<div class="rp-conf" style="color:${cfColor}" title="Clarity's confidence in this reading">${cf}%</div>`;
+    }
+    h+=`${gaugeHTML(v,k)}</div>`;
+  });
+  h+=`</div>`;
+  if(confidence){
+    const vals=KEYS.map(k=>confidence[k]).filter(x=>x!=null);
+    if(vals.length){
+      const lowest=Math.min(...vals);
+      if(lowest<45)h+=`<div class="rcard-conf-note">⚠ Some readings are low-confidence (down to ${lowest}%). For numbers you can act on with certainty, retest in bright, even daylight with the card flat.</div>`;
+    }
+  }
+  if(doses.length===0){
+    h+=`<div class="rcard-ok">✨ Everything is in range — water is balanced!</div>`;
+  } else {
+    h+=`<div style="font-size:9px;color:var(--mut2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;font-family:'DM Mono',monospace">Recommended · ${S.gallons.toLocaleString()} gal</div>`;
+    doses.forEach(d=>{
+      const c=d.sev==='high'?'var(--coral)':'var(--aqua)';
+      h+=`<div class="rcard-dose"><div class="rd-top"><span class="rd-name">${d.nm}</span>`;
+      h+=`<span class="rd-badge" style="color:${c};background:${c}1a">${d.sev==='high'?'REDUCE':'ADD'}</span></div>`;
+      h+=`<div class="rd-amt">${d.amt}</div><div class="rd-ex">${d.ex}</div></div>`;
+    });
+  }
+  h+=`<button class="rcard-save" data-msgidx="${msgIdx}" ${saved?'disabled':''}>${saved?'✓ Saved to History':'💾 Save to History'}</button>`;
+  h+=`</div>`;
+  return h;
+}
+
+function buildSparkline(key,w,h){
+  const pts=S.history.slice(0,15).reverse().filter(e=>e[key]!=null);
+  if(pts.length<2)return'';
+  const vals=pts.map(e=>e[key]);
+  const mn=Math.min(...vals),mx=Math.max(...vals);
+  const range=mx-mn||1;
+  const r=IDEAL[key];
+  // ideal band
+  const y1=h-((r.max-mn)/range)*h;
+  const y2=h-((r.min-mn)/range)*h;
+  let svg=`<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="display:block">`;
+  svg+=`<rect x="0" y="${Math.max(0,y1)}" width="${w}" height="${Math.min(h,y2)-Math.max(0,y1)}" fill="rgba(92,200,160,.12)" rx="2"/>`;
+  const points=vals.map((v,i)=>{
+    const x=(i/(vals.length-1))*w;
+    const y=h-((v-mn)/range)*h;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  });
+  svg+=`<polyline points="${points.join(' ')}" fill="none" stroke="var(--aqua)" stroke-width="1.5" stroke-linejoin="round"/>`;
+  // dots on last point
+  const last=points[points.length-1];
+  svg+=`<circle cx="${last.split(',')[0]}" cy="${last.split(',')[1]}" r="2.5" fill="var(--aqua)"/>`;
+  svg+=`</svg>`;
+  return svg;
+}
+
+function renderDash(b){
+  const latest=S.history[0];
+  const hasData=!!latest;
+
+  // Health score
+  let score=0,measured=0,swimStatus='unknown',swimReason='';
+  if(hasData){
+    KEYS.forEach(k=>{
+      if(latest[k]!=null){
+        measured++;
+        const st=statusOf(latest[k],k);
+        if(st==='OK')score++;
+      }
+    });
+    score=measured?Math.round((score/measured)*100):0;
+
+    // Swim safety based on FC and pH
+    const fc=latest.chlorine,ph=latest.ph;
+    if(fc!=null&&fc<0.5){
+      swimStatus='danger';
+      swimReason=`Chlorine is ${fc} ppm (needs 1+ ppm)`;
+    }
+    else if(ph!=null&&(ph<6.8||ph>8.0)){
+      swimStatus='danger';
+      swimReason=ph<6.8?`pH is ${ph} (too low, needs 7.0+)`:`pH is ${ph} (too high, needs below 8.0)`;
+    }
+    else if(fc!=null&&fc<1){
+      swimStatus='caution';
+      swimReason=`Chlorine is ${fc} ppm (ideal is 1-3 ppm)`;
+    }
+    else if(ph!=null&&(ph<7.0||ph>7.8)){
+      swimStatus='caution';
+      swimReason=ph<7.0?`pH is ${ph} (low, ideal 7.2-7.6)`:`pH is ${ph} (high, ideal 7.2-7.6)`;
+    }
+    else if(fc!=null)swimStatus='safe';
+  }
+
+  // Days since last test
+  let daysSince='—';
+  if(hasData){
+    const diff=Math.floor((Date.now()-latest.timestamp)/864e5);
+    daysSince=diff===0?'Today':diff===1?'Yesterday':diff+' days ago';
+  }
+
+  const swimIcon=swimStatus==='safe'?'🏊':swimStatus==='caution'?'⚠️':swimStatus==='danger'?'🚫':'❓';
+  const swimLabel=swimStatus==='safe'?'Safe to swim':swimStatus==='caution'?'Use caution':swimStatus==='danger'?'Do not swim':'No data yet';
+  const swimColor=swimStatus==='safe'?'var(--green)':swimStatus==='caution'?'#f0c040':swimStatus==='danger'?'var(--coral)':'var(--mut2)';
+  const scoreColor=score>=80?'var(--green)':score>=50?'#f0c040':'var(--coral)';
+
+  let html=`<div class="bin">`;
+
+  // Top row: Health Score + Swim Status
+  html+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+    <div class="formcard" style="text-align:center;padding:18px 12px;margin:0">
+      <div style="font-size:36px;font-weight:700;color:${hasData?scoreColor:'var(--mut2)'};font-family:'Playfair Display',serif;line-height:1">${hasData?score:'—'}</div>
+      <div class="mono" style="font-size:9px;color:var(--mut2);letter-spacing:1.5px;text-transform:uppercase;margin-top:6px">Pool Health</div>
+    </div>
+    <div class="formcard" style="text-align:center;padding:18px 12px;margin:0">
+      <div style="font-size:30px;line-height:1">${swimIcon}</div>
+      <div style="font-size:11px;color:${swimColor};font-weight:600;margin-top:6px">${swimLabel}</div>
+    </div>
+  </div>`;
+  
+  // Show reason if not safe
+  if(swimReason){
+    html+=`<div class="formcard" style="padding:12px 16px;margin-bottom:12px;background:rgba(236,138,114,0.08);border-left:3px solid ${swimColor}">
+      <div class="mono" style="font-size:9px;color:var(--mut2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px">Why:</div>
+      <div style="font-size:12px;color:var(--text);line-height:1.5">${swimReason}</div>
+    </div>`;
+  }
+
+  // Last tested
+  html+=`<div class="formcard" style="display:flex;justify-content:space-between;align-items:center;padding:13px 16px;margin-bottom:12px">
+    <div><div class="mono" style="font-size:9px;color:var(--mut2);letter-spacing:1.5px;text-transform:uppercase">Last tested</div>
+      <div style="font-size:14px;margin-top:3px;font-weight:500">${daysSince}</div></div>
+    <button class="chip on" onclick="S.tab='chat';render()">Test now →</button>
+  </div>`;
+
+  // Weather Watch (Phase 4) — real forecast → pool-specific cautions
+  if(S.poolProfile.lat!=null)fetchWeather(); // self-guards: only fetches when stale
+  html+=renderWeatherCard();
+
+  // What Clarity Knows (Pool Model)
+  html+=renderPoolModelCard();
+
+  if(hasData){
+    // Current readings
+    html+=`<div class="mono" style="font-size:9px;color:var(--mut2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;margin-top:16px">Current Readings</div>`;
+    html+=`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px">`;
+    KEYS.forEach(k=>{
+      const v=latest[k];
+      const c=color(v,k);
+      const r=IDEAL[k];
+      const st=statusOf(v,k);
+      const badge=st==='OK'?'':st==='LOW'?' ↓':' ↑';
+      html+=`<div class="formcard" style="text-align:center;padding:12px 8px;margin:0">
+        <div class="mono" style="font-size:9px;color:var(--mut2);letter-spacing:1px">${r.short}</div>
+        <div style="font-size:22px;font-weight:700;color:${c};font-family:'Playfair Display',serif;margin:4px 0">${v??'—'}${badge}</div>
+        <div style="font-size:9px;color:var(--mut2)">${r.min}–${r.max}${r.unit?' '+r.unit:''}</div>
+      </div>`;
+    });
+    html+=`</div>`;
+
+    // Sparklines for key params
+    const sparkKeys=['chlorine','ph','alkalinity'];
+    const sparkData=sparkKeys.filter(k=>S.history.filter(e=>e[k]!=null).length>=2);
+    if(sparkData.length){
+      html+=`<div class="mono" style="font-size:9px;color:var(--mut2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">Trends (last 15 tests)</div>`;
+      sparkData.forEach(k=>{
+        const r=IDEAL[k];
+        const lastVal=latest[k];
+        html+=`<div class="formcard" style="padding:12px 14px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-size:12px;font-weight:500">${r.label}</span>
+            <span style="font-size:13px;font-weight:600;color:${color(lastVal,k)}">${lastVal??'—'} ${r.unit}</span>
+          </div>
+          ${buildSparkline(k,280,40)}
+        </div>`;
+      });
+    }
+
+    // Recent actions timeline
+    const withActions=S.history.filter(e=>e.action).slice(0,5);
+    if(withActions.length){
+      html+=`<div class="mono" style="font-size:9px;color:var(--mut2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;margin-top:16px">Recent Actions</div>`;
+      withActions.forEach(e=>{
+        const d=new Date(e.timestamp);
+        const ds=d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+        html+=`<div style="display:flex;gap:10px;align-items:baseline;margin-bottom:6px;font-size:12px">
+          <span class="mono" style="color:var(--mut2);font-size:10px;min-width:45px">${ds}</span>
+          <span style="color:var(--aqua)">${e.action}</span>
+          ${e.actionAmt?`<span style="color:var(--mut)">· ${e.actionAmt}</span>`:''}
+          ${e.notes?`<span style="color:var(--mut2);font-style:italic">· ${e.notes}</span>`:''}
+        </div>`;
+      });
+    }
+
+    // Computed insights
+    if(S.history.length>=3){
+      const dashInsights=[];
+
+      // FC decay rate
+      const fcP=[];
+      for(let i=0;i<S.history.length-1;i++){
+        const cur=S.history[i],prev=S.history[i+1];
+        if(cur.chlorine!=null&&prev.chlorine!=null&&cur.action!=='Added Chlorine'&&cur.action!=='Shocked'&&prev.action!=='Added Chlorine'&&prev.action!=='Shocked'){
+          const days=(cur.timestamp-prev.timestamp)/864e5;
+          if(days>0&&days<14)fcP.push((prev.chlorine-cur.chlorine)/days);
+        }
+      }
+      if(fcP.length>=2){
+        const avg=(fcP.reduce((a,b)=>a+b,0)/fcP.length).toFixed(2);
+        dashInsights.push({icon:'📉',text:`FC drops ~${Math.abs(avg)} ppm/day`});
+      }
+
+      // pH trend
+      const phV=S.history.filter(e=>e.ph!=null).slice(0,10);
+      if(phV.length>=3){
+        const recent=phV.slice(0,3).reduce((a,e)=>a+e.ph,0)/3;
+        const older=phV.slice(-3).reduce((a,e)=>a+e.ph,0)/Math.min(3,phV.slice(-3).length);
+        const drift=recent-older;
+        if(Math.abs(drift)>0.1)dashInsights.push({icon:drift>0?'📈':'📉',text:`pH trending ${drift>0?'up':'down'} (${older.toFixed(1)} → ${recent.toFixed(1)})`});
+        else dashInsights.push({icon:'➡️',text:`pH stable (~${recent.toFixed(1)})`});
+      }
+
+      // Test frequency
+      const gaps=[];
+      for(let i=0;i<Math.min(S.history.length-1,10);i++){
+        gaps.push((S.history[i].timestamp-S.history[i+1].timestamp)/864e5);
+      }
+      if(gaps.length){
+        const avgG=(gaps.reduce((a,b)=>a+b,0)/gaps.length).toFixed(0);
+        dashInsights.push({icon:'🗓️',text:`Testing every ~${avgG} days`});
+      }
+
+      // Recurring issues
+      const ic={};
+      S.history.slice(0,15).forEach(e=>{
+        KEYS.forEach(k=>{
+          const st=statusOf(e[k],k);
+          if(st&&st!=='OK'){ic[IDEAL[k].short+' '+st]=(ic[IDEAL[k].short+' '+st]||0)+1;}
+        });
+      });
+      const rec=Object.entries(ic).filter(([,c])=>c>=3).sort((a,b)=>b[1]-a[1]);
+      if(rec.length)dashInsights.push({icon:'🔁',text:`Recurring: ${rec.map(([k,c])=>k+' ('+c+'x)').join(', ')}`});
+
+      // Next test prediction
+      if(fcP.length>=2){
+        const avgDecay=Math.abs(fcP.reduce((a,b)=>a+b,0)/fcP.length);
+        const currentFc=latest.chlorine;
+        if(currentFc!=null&&avgDecay>0){
+          const daysToMin=((currentFc-IDEAL.chlorine.min)/avgDecay).toFixed(0);
+          if(daysToMin>0&&daysToMin<14)dashInsights.push({icon:'⏰',text:`FC reaches minimum in ~${daysToMin} days — test by then`});
+        }
+      }
+
+      if(dashInsights.length){
+        html+=`<div class="mono" style="font-size:9px;color:var(--mut2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;margin-top:16px">Insights</div>`;
+        html+=`<div class="formcard" style="padding:12px 14px;margin-bottom:8px">`;
+        dashInsights.forEach(ins=>{
+          html+=`<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;font-size:12px">
+            <span>${ins.icon}</span><span style="color:var(--txt)">${ins.text}</span>
+          </div>`;
+        });
+        html+=`</div>`;
+      }
+    }
+
+    // Smart suggested prompts (context-aware)
+    const prompts=[];
+    if(latest){
+      const daysSinceNum=Math.floor((Date.now()-latest.timestamp)/864e5);
+      if(daysSinceNum>=3)prompts.push('Should I test today?');
+      const fc=latest.chlorine,ph=latest.ph;
+      if(fc!=null&&fc<IDEAL.chlorine.min)prompts.push('How do I raise my chlorine?');
+      if(ph!=null&&ph>IDEAL.ph.max)prompts.push('Why does my pH keep rising?');
+      if(ph!=null&&ph<IDEAL.ph.min)prompts.push('How do I raise my pH?');
+      const alk=latest.alkalinity;
+      if(alk!=null&&alk<IDEAL.alkalinity.min)prompts.push('My alkalinity is low — what should I do?');
+      if(S.history.length>=5)prompts.push('How is my pool doing overall?');
+      if(S.history.length>=3)prompts.push('What patterns do you see?');
+    }
+    if(!prompts.length)prompts.push('What should I know about pool maintenance?','How often should I test?');
+    html+=`<div class="mono" style="font-size:9px;color:var(--mut2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;margin-top:16px">Ask Clarity</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">${prompts.slice(0,4).map(q=>
+        `<button class="chip dash-prompt" data-q="${esc(q)}">${q}</button>`).join('')}</div>`;
+
+    // Export + Manual buttons
+    html+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <button class="btn" id="exportBtn" style="background:var(--panel2);border:1px solid var(--line);font-size:11px;color:var(--aqua);padding:12px 10px">📋 Export Report</button>
+      <button class="btn" id="manualBtn" style="background:var(--panel2);border:1px solid var(--line);font-size:11px;color:var(--aqua);padding:12px 10px">📖 Pool Manual</button>
+    </div>`;
+
+  } else {
+    html+=`<div class="empty"><div class="e">📊</div>
+      <div class="mono" style="letter-spacing:1px;text-transform:uppercase;font-size:12px">No data yet</div>
+      <div style="font-size:12px;margin-top:6px">Test your water to see your dashboard. Tap <strong>Chat</strong> to scan a strip — slide it into the channel on the left edge of the AquaChek card and photograph the whole card — or <strong>Chemistry</strong> to enter readings.</div></div>`;
+  }
+
+  // Onboarding nudge if profile incomplete
+  const P=S.poolProfile;
+  const profileDone=[P.type,P.surface,P.filter,P.climate,P.sun,P.water,P.usage].filter(Boolean).length;
+  if(profileDone<7){
+    html+=`<div class="formcard" style="padding:13px 16px;margin-top:12px;border:1px solid var(--line2)">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-size:12px;font-weight:500;color:var(--aqua)">Complete your pool profile</div>
+        <div style="font-size:11px;color:var(--mut);margin-top:2px">${profileDone}/7 fields · Better advice with a complete profile</div></div>
+        <button class="chip on" id="nudgeSetup" style="font-size:11px">Set up →</button>
+      </div>
+    </div>`;
+  }
+
+  html+=`</div>`;
+  b.innerHTML=html;
+
+  // Smart prompt clicks → go to chat and send
+  b.querySelectorAll('.dash-prompt').forEach(btn=>{
+    btn.onclick=()=>{S.tab='chat';render();setTimeout(()=>sendMessage(btn.dataset.q),100);};
+  });
+
+  // Export report
+  if($('exportBtn'))$('exportBtn').onclick=()=>{
+    let report='CLARITY POOL REPORT\n';
+    report+='Generated: '+new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})+'\n';
+    report+='═══════════════════════\n\n';
+    report+='POOL PROFILE\n';
+    report+='Pool size: '+S.gallons.toLocaleString()+' gallons\n';
+    const P=S.poolProfile;
+    if(P.type)report+='Sanitizer: '+P.type+'\n';
+    if(P.surface)report+='Surface: '+P.surface+'\n';
+    if(P.filter)report+='Filter: '+P.filter+'\n';
+    if(P.climate)report+='Climate: '+P.climate+'\n';
+    if(P.sun)report+='Sun: '+P.sun+'\n';
+    if(P.water)report+='Water source: '+P.water+'\n';
+    if(P.usage)report+='Usage: '+P.usage+'\n';
+    if(P.equipment&&P.equipment.length)report+='Equipment: '+P.equipment.join(', ')+'\n';
+    if(S.poolNotes)report+='Notes: '+S.poolNotes+'\n';
+    report+='\nTEST HISTORY (last 20)\n';
+    S.history.slice(0,20).forEach(e=>{
+      const d=new Date(e.timestamp);
+      const ds=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+      report+='\n'+ds+'\n';
+      KEYS.forEach(k=>{
+        if(e[k]!=null)report+='  '+IDEAL[k].label+': '+e[k]+' '+IDEAL[k].unit+' ('+statusOf(e[k],k)+')\n';
+      });
+      if(e.action)report+='  Action: '+e.action+(e.actionAmt?' · '+e.actionAmt:'')+'\n';
+      if(e.notes)report+='  Notes: '+e.notes+'\n';
+    });
+    navigator.clipboard.writeText(report).then(()=>{
+      $('exportBtn').textContent='✓ Copied!';
+      setTimeout(()=>{$('exportBtn').textContent='📋 Export Report';},2000);
+    }).catch(()=>{
+      const blob=new Blob([report],{type:'text/plain'});
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+      a.download='clarity-pool-report.txt';a.click();
+    });
+  };
+
+  // Pool manual button → go to chat and ask Claude
+  if($('manualBtn'))$('manualBtn').onclick=()=>{
+    S.tab='chat';render();
+    setTimeout(()=>sendMessage('Based on everything you know about my pool — profile, history, patterns, and current readings — write me a comprehensive Pool Maintenance Manual. Include: my pool specs, ideal ranges for my setup, my typical maintenance schedule, what chemicals I use and how much, seasonal tips for my climate, common issues I run into and how to fix them, and any patterns you\'ve noticed. Make it specific to MY pool, not generic advice.'),100);
+  };
+
+  // Onboarding nudge
+  if($('nudgeSetup'))$('nudgeSetup').onclick=()=>{S.setupOpen=true;renderSetup();};
+}
+
+function actionSummary(a){
+  if(a.label)return a.label;
+  const x=a.args||{};
+  if(a.tool==='record_action')return `${x.action||'Action'}${x.amount?' · '+x.amount:''}`;
+  if(a.tool==='set_reminder'||a.tool==='update_schedule')return `${x.title||'Task'}${x.inDays?' · in '+x.inDays+' day(s)':''}`;
+  if(a.tool==='update_profile')return x.note||(x.field?`${x.field}: ${x.value}`:'pool fact');
+  if(a.tool==='record_belief')return x.observation||x.text||x.claim||'note';
+  return a.tool;
+}
+function renderActionChips(actions,msgIdx){
+  if(!actions||!actions.length)return'';
+  if(!S._actionState)S._actionState=new Map();
+  let h=`<div class="actwrap" style="margin-top:10px">`;
+  actions.forEach((a,ai)=>{
+    const st=S._actionState.get(msgIdx+':'+ai);
+    const icon=a.tool==='record_action'?'🧪':a.tool==='update_profile'?'📝':a.tool==='record_belief'?'💡':'🗓️';
+    const verb=(a.tool==='set_reminder'||a.tool==='update_schedule')?'Add':'Save';
+    h+=`<div class="actcard" style="background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:7px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:${st?'0':'8px'}">
+        <span>${icon}</span>
+        <div style="flex:1;min-width:0">
+          <div class="mono" style="font-size:8.5px;color:var(--mut2);letter-spacing:1px;text-transform:uppercase">${ACTION_TOOLS[a.tool]||a.tool}</div>
+          <div style="font-size:12.5px;color:var(--txt);line-height:1.35">${esc(actionSummary(a))}</div>
+        </div>
+        ${st==='done'?`<span style="font-size:11px;color:var(--green);white-space:nowrap">✓ Done</span>`:st==='dismissed'?`<span style="font-size:11px;color:var(--mut2);white-space:nowrap">Dismissed</span>`:''}
+      </div>`;
+    if(!st)h+=`<div style="display:flex;gap:7px">
+        <button class="act-do chip on" data-mi="${msgIdx}" data-ai="${ai}" style="font-size:11.5px;padding:5px 12px">✓ ${verb}</button>
+        <button class="act-no chip" data-mi="${msgIdx}" data-ai="${ai}" style="font-size:11.5px;padding:5px 12px">✗ Dismiss</button>
+      </div>`;
+    h+=`</div>`;
+  });
+  return h+`</div>`;
+}
+function executeAction(mi,ai){
+  const msg=S.messages[mi];
+  if(!msg||!msg._actions||!msg._actions[ai])return;
+  if(!S._actionState)S._actionState=new Map();
+  if(S._actionState.get(mi+':'+ai))return; // already handled
+  runAction(msg._actions[ai]);
+  S._actionState.set(mi+':'+ai,'done');
+  render();
+}
+function dismissAction(mi,ai){
+  if(!S._actionState)S._actionState=new Map();
+  S._actionState.set(mi+':'+ai,'dismissed');
+  render();
+}
+
+function renderChat(b){
+  const quick=(function(){
+    const hist=S.history||[];
+    const hasModel=S.poolModel&&S.poolModel.enabled;
+    const hasReadings=hist.length>=1;
+    const base=[];
+    if(!hasReadings){
+      base.push("What does Clarity track for me?");
+      base.push("How do I take a good strip photo?");
+      base.push("What should I set up first?");
+      base.push("How do I shock my pool?");
+    }else{
+      const last=hist[0]||{};
+      const fc=last.chlorine,ph=last.ph,alk=last.alkalinity;
+      base.push("How does my pool look lately?");
+      if(fc!=null&&fc<1)base.push("My chlorine is very low  what do I add?");
+      else if(ph!=null&&ph>7.8)base.push("Why is my pH running high?");
+      else if(alk!=null&&alk<80)base.push("My alkalinity is low  how do I fix it?");
+      else base.push("What should I focus on this week?");
+      if(!hasModel)base.push("Build my pool model");
+      else base.push("What patterns have you noticed?");
+      base.push("What maintenance is coming up?");
+    }
+    return base.slice(0,4);
+  })()
+  let html='<div class="bin">';
+  if(!S._savedMsgs)S._savedMsgs=new Set();
+  S.messages.forEach((m,idx)=>{
+    const u=m.role==='user';
+    const imgHtml=m._image?`<img class="msg-img" src="${m._image}">`:'';
+    const sentBadge=m._imageSize?`<div style="font-size:9px;color:var(--green);margin-top:4px;font-family:'DM Mono',monospace">📷 Image sent (${Math.round(m._imageSize/1024)}KB)</div>`:'';
+    let displayText=m.content;
+    let cardHtml='', actHtml='';
+    if(!u){
+      const parsed=parseReadings(m.content);
+      if(parsed){
+        displayText=parsed.clean;
+        m._readings=parsed.readings;
+        cardHtml=renderResultsCard(parsed.readings,idx,parsed.confidence);
+      }
+      const aParsed=parseActions(displayText);
+      if(aParsed){displayText=aParsed.clean;m._actions=aParsed.actions;}
+      if(m._actions&&m._actions.length)actHtml=renderActionChips(m._actions,idx);
+    }
+    html+=`<div class="msg ${u?'u':''}">${u?'':`<div class="av">${AV}</div>`}<div class="bub ${u?'u':'a'}">${imgHtml}${esc(displayText)}${sentBadge}${cardHtml}${actHtml}</div></div>`;
+  });
+  if(S.thinking)html+=`<div class="msg"><div class="av">${AV}</div><div class="dots"><i style="animation-delay:0s"></i><i style="animation-delay:.2s"></i><i style="animation-delay:.4s"></i></div></div>`;
+  if(S.messages.length===1&&!S.thinking){
+    html+=`<div class="sugg"><div class="h">Suggested questions</div>${quick.map(q=>`<button class="sg" data-q="${esc(q)}">${q}</button>`).join('')}</div>`;
+  }
+  html+='<div id="bottom"></div></div>';
+  b.innerHTML=html;
+  b.querySelectorAll('.sg').forEach(s=>s.onclick=()=>sendMessage(s.dataset.q));
+  b.querySelectorAll('.rcard-save').forEach(btn=>{
+    if(btn.disabled)return;
+    btn.onclick=(e)=>{
+      e.stopPropagation();
+      const mi=+btn.dataset.msgidx;
+      const msg=S.messages[mi];
+      if(msg&&msg._readings){
+        logReading(msg._readings);
+        S._savedMsgs.add(mi);
+        render();
+      }
+    };
+  });
+  b.querySelectorAll('.act-do').forEach(btn=>btn.onclick=e=>{e.stopPropagation();executeAction(+btn.dataset.mi,+btn.dataset.ai);});
+  b.querySelectorAll('.act-no').forEach(btn=>btn.onclick=e=>{e.stopPropagation();dismissAction(+btn.dataset.mi,+btn.dataset.ai);});
+  $('bottom')?.scrollIntoView({behavior:'smooth'});
+}
+
+function renderChem(b){
+  const r=S._draft||{};
+  const last=S.history[0];
+  let html=`<div class="bin"><div class="formcard">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px">
+      <h3 style="margin:0">🧪 Enter your readings</h3>
+      <button class="add" id="pullBtn" style="padding:6px 11px;font-size:11.5px${last?'':';opacity:.4;cursor:default;border-color:var(--line)'}" ${last?'':'title="No saved tests yet"'}>↧ Last test</button>
+    </div>`;
+  KEYS.forEach(k=>{
+    const i=IDEAL[k];
+    html+=`<div class="inrow"><label>${i.label} <span class="rng">${i.min}–${i.max}${i.unit}</span></label>
+      <input data-k="${k}" type="number" inputmode="decimal" step="any" value="${r[k]??''}" placeholder="–"></div>`;
+  });
+  html+=`<button class="btn go" id="calcBtn">Calculate dosing</button>
+    <button class="btn" id="directLogBtn" style="background:var(--panel2);border:1px solid var(--line);margin-top:8px;width:100%;font-size:13px;color:var(--aqua)">💾 Save readings to history</button></div>`;
+  if(S._doses){
+    if(S._doses.length===0){
+      html+=`<div class="formcard" style="text-align:center"><div style="font-size:28px;margin-bottom:8px">✨</div>
+        <div class="serif" style="font-size:19px;color:var(--green)">Water is balanced</div>
+        <div style="font-size:12px;color:var(--mut);margin-top:6px">Everything is in range. Nothing to add right now.</div></div>`;
+    } else {
+      html+=`<div style="font-size:10px;color:var(--mut2);letter-spacing:1.5px;text-transform:uppercase;margin:4px 0 11px" class="mono">Recommended for ${S.gallons.toLocaleString()} gal</div>`;
+      S._doses.forEach(d=>{
+        const c=d.sev==='high'?'var(--coral)':'var(--aqua)';
+        html+=`<div class="dose"><div class="top"><span class="nm">${d.nm}</span>
+          <span class="badge" style="color:${c};background:${c}1f">${d.sev==='high'?'REDUCE':'ADD'}</span></div>
+          <div class="amt">${d.amt}</div><div class="ex">${d.ex}</div></div>`;
+      });
+      html+=`<button class="btn go" id="logBtn" style="background:var(--panel2);margin-top:4px">＋ Save these readings to history</button>`;
+    }
+  }
+  html+='</div>';
+  b.innerHTML=html;
+  b.querySelectorAll('input[data-k]').forEach(inp=>inp.oninput=e=>{S._draft=S._draft||{};const val=e.target.value;S._draft[e.target.dataset.k]=val===''?null:parseFloat(val)});
+  if(last&&$('pullBtn'))$('pullBtn').onclick=()=>{S._draft={};KEYS.forEach(k=>S._draft[k]=last[k]??null);S._doses=doseAdvice(S._draft,S.gallons);render()};
+  $('calcBtn').onclick=()=>{const d=S._draft||{};S._doses=doseAdvice(d,S.gallons);render()};
+  $('directLogBtn').onclick=()=>{const d=S._draft||{};const hasAny=KEYS.some(k=>d[k]!=null);if(!hasAny){alert('Enter at least one reading first.');return;}logReading(d);S.tab='history';render();};
+  if($('logBtn'))$('logBtn').onclick=()=>{logReading(S._draft);S.tab='history';render()};
+}
+
+const ACTIONS=['Added Chlorine','Shocked','pH Up','pH Down','Added Alkalinity','Backwashed','Brushed','Added CYA','Nothing'];
+
+function renderHistory(b){
+  if(!S.history.length){b.innerHTML=`<div class="bin"><div class="empty"><div class="e">📋</div>
+    <div class="mono" style="letter-spacing:1px;text-transform:uppercase;font-size:12px">No tests yet</div>
+    <div style="font-size:12px;margin-top:6px">Send a strip photo in Chat or enter readings in Chemistry to start tracking.</div></div></div>`;return;}
+  let html=`<div class="bin"><div class="mono" style="font-size:10px;color:var(--mut2);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">${S.history.length} test${S.history.length>1?'s':''} recorded</div>`;
+  S.history.forEach((e,idx)=>{
+    const d=new Date(e.timestamp);
+    const ts=d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+' · '+d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    const issues=KEYS.filter(k=>{const v=e[k],r=IDEAL[k];return v!=null&&(v<r.min||v>r.max)});
+    const ok=issues.length===0;
+    const open=S.openHist===e.timestamp;
+
+    // Action summary line (shown when collapsed)
+    const actionSum=e.action?`<div style="font-size:11px;color:var(--aqua);margin-top:6px">↳ ${e.action}${e.actionAmt?' · '+e.actionAmt:''}${e.notes?' · '+e.notes:''}</div>`:'';
+
+    let detail='';
+    if(open){
+      const doses=doseAdvice(e,e.gallons||S.gallons);
+      if(doses.length===0){
+        detail=`<div style="margin-top:13px;padding-top:13px;border-top:1px solid var(--line);font-size:13px;color:var(--green)">✓ Everything was in range — no action needed.</div>`;
+      } else {
+        detail=`<div style="margin-top:13px;padding-top:13px;border-top:1px solid var(--line)">
+          <div class="mono" style="font-size:9px;color:var(--mut2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:9px">What to do · for ${(e.gallons||S.gallons).toLocaleString()} gal</div>
+          ${doses.map(d=>{const c=d.sev==='high'?'var(--coral)':'var(--aqua)';
+            return `<div style="margin-bottom:11px"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;font-weight:600">${d.nm}</span>
+              <span class="mono" style="font-size:9px;letter-spacing:1px;color:${c};background:${c}1f;padding:2px 8px;border-radius:5px">${d.sev==='high'?'REDUCE':'ADD'}</span></div>
+              <div class="serif" style="font-size:16px;color:var(--aqua2);margin:3px 0">${d.amt}</div>
+              <div style="font-size:11.5px;color:var(--mut);line-height:1.5">${d.ex}</div></div>`}).join('')}</div>`;
+      }
+
+      // Action tracking section
+      detail+=`<div style="margin-top:13px;padding-top:13px;border-top:1px solid var(--line)">
+        <div class="mono" style="font-size:9px;color:var(--mut2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:9px">What did you do?</div>
+        <div class="chips" style="margin-bottom:8px">${ACTIONS.map(a=>
+          `<button class="chip hist-action ${e.action===a?'on':''}" data-idx="${idx}" data-action="${a}">${a}</button>`).join('')}</div>
+        <input class="hist-amt" data-idx="${idx}" type="text" placeholder="Amount (e.g. 2 lbs, 1 gal acid)" value="${esc(e.actionAmt||'')}"
+          style="width:100%;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:9px;padding:8px 11px;color:var(--txt);font-size:12px;font-family:inherit;margin-bottom:8px">
+        <div class="mono" style="font-size:9px;color:var(--mut2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;margin-top:4px">Notes</div>
+        <input class="hist-notes" data-idx="${idx}" type="text" placeholder="Party, heavy rain, gone for a week…" value="${esc(e.notes||'')}"
+          style="width:100%;background:rgba(0,0,0,.28);border:1px solid var(--line);border-radius:9px;padding:8px 11px;color:var(--txt);font-size:12px;font-family:inherit">
+        <button class="btn hist-del" data-idx="${idx}" style="margin-top:10px;width:100%;background:rgba(236,138,114,.08);border:1px solid rgba(236,138,114,.24);color:var(--coral);font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:10px 12px">Delete this test</button>
+      </div>`;
+    }
+
+    html+=`<div class="hcard" data-ts="${e.timestamp}" style="cursor:pointer"><div class="top"><span class="ts">${ts}</span>
+      <span class="fl" style="color:${ok?'var(--green)':'var(--coral)'};background:${ok?'rgba(92,200,160,.1)':'rgba(236,138,114,.1)'}">${ok?'All ideal':issues.length+' issue'+(issues.length>1?'s':'')} <span style="opacity:.6">${open?'▴':'▾'}</span></span></div>
+      <div class="h5">${KEYS.map(k=>{const v=e[k],c=color(v,k);
+        return `<div class="c"><div class="ck">${IDEAL[k].short}</div><div class="cv" style="color:${v!=null?c:'rgba(255,255,255,.15)'}">${v??'-'}</div></div>`}).join('')}</div>${actionSum}${detail}</div>`;
+  });
+  html+=`<button class="btn" id="clearBtn" style="background:none;border:1px solid rgba(236,138,114,.22);color:rgba(236,138,114,.6);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:11px 16px">Clear history</button></div>`;
+  b.innerHTML=html;
+
+  // Card expand/collapse (only on header click)
+  b.querySelectorAll('.hcard').forEach(el=>{
+    el.querySelector('.top').onclick=(ev)=>{
+      ev.stopPropagation();
+      const ts=+el.dataset.ts;
+      S.openHist=S.openHist===ts?null:ts;
+      render();
+    };
+  });
+
+  // Action chip clicks
+  b.querySelectorAll('.hist-action').forEach(btn=>{
+    btn.onclick=(ev)=>{
+      ev.stopPropagation();
+      const idx=+btn.dataset.idx;
+      const action=btn.dataset.action;
+      S.history[idx].action=S.history[idx].action===action?null:action;
+      persist();render();
+    };
+  });
+
+  // Amount fields
+  b.querySelectorAll('.hist-amt').forEach(el=>{
+    el.onclick=ev=>ev.stopPropagation();
+    el.onblur=()=>{
+      const idx=+el.dataset.idx;
+      S.history[idx].actionAmt=el.value.trim();
+      persist();
+    };
+  });
+
+  // Notes fields
+  b.querySelectorAll('.hist-notes').forEach(el=>{
+    el.onclick=ev=>ev.stopPropagation();
+    el.onblur=()=>{
+      const idx=+el.dataset.idx;
+      S.history[idx].notes=el.value.trim();
+      persist();
+    };
+  });
+
+  // Single-test delete buttons
+  b.querySelectorAll('.hist-del').forEach(el=>{
+    el.onclick=ev=>{
+      ev.stopPropagation();
+      const idx=+el.dataset.idx;
+      if(confirm('Delete this test?')){S.history.splice(idx,1);persist();render();}
+    };
+  });
+
+  $('clearBtn').onclick=()=>{if(confirm('Clear all history?')){S.history=[];persist();render()}};
+}
+
+function renderSchedule(b){
+  const now=Date.now(),day=864e5;
+  const tasks=[...S.tasks].sort((a,b)=>((a.last+a.int*day)-(b.last+b.int*day)));
+  let html=`<div class="bin"><div class="sec"><h2>Maintenance</h2><div class="ln"></div>
+    <button class="add" id="addTask">＋ Add task</button></div>`;
+  if(!tasks.length){
+    html+=`<div class="empty"><div class="e">🗓️</div><div style="font-size:13px">No tasks yet — add your first.</div></div>`;
+  }
+  tasks.forEach(t=>{
+    const dueIn=Math.round((t.last+t.int*day-now)/day);
+    let label,c;
+    if(t.done){label='done';c='var(--green)';}
+    else if(dueIn<0){label=`${-dueIn}d overdue`;c='var(--coral)';}
+    else if(dueIn===0){label='due today';c='var(--coral)';}
+    else if(dueIn<=2){label=`in ${dueIn}d`;c='var(--amber)';}
+    else{label=`in ${dueIn}d`;c='var(--mut)';}
+    html+=`<div class="task ${t.done?'done':''}" data-id="${t.id}">
+      <div class="cb" data-act="toggle">${t.done?'✓':''}</div>
+      <div class="tx" data-act="edit"><div class="tt">${esc(t.t)}</div><div class="fr">${esc(t.freq)} · every ${t.int}d</div></div>
+      <span class="due" style="color:${c};background:${c}1a">${label}</span>
+      <button class="del" data-act="del" title="Delete">✕</button></div>`;
+  });
+  html+='</div>';
+  b.innerHTML=html;
+  $('addTask').onclick=()=>openTask(null);
+  b.querySelectorAll('.task').forEach(el=>{
+    const id=+el.dataset.id;
+    el.querySelector('[data-act="toggle"]').onclick=()=>{
+      const t=S.tasks.find(x=>x.id===id);
+      t.done=!t.done; if(t.done)t.last=Date.now();
+      persist();render();
+      if(t.done)setTimeout(()=>{t.done=false;persist();if(S.tab==='schedule')render();},650);
+    };
+    el.querySelector('[data-act="edit"]').onclick=()=>openTask(id);
+    el.querySelector('[data-act="del"]').onclick=()=>{
+      if(confirm('Delete this task?')){S.tasks=S.tasks.filter(x=>x.id!==id);persist();render();}
+    };
+  });
+}
+
+// task editor
+function openTask(id){
+  S.editTask=id;
+  const t=id?S.tasks.find(x=>x.id===id):null;
+  $('tmTitle').textContent=t?'Edit task':'New task';
+  $('tName').value=t?t.t:'';
+  $('tFreq').value=t?t.freq:'Weekly';
+  $('tInt').value=t?t.int:7;
+  $('tDelete').style.display=t?'block':'none';
+  $('taskScrim').classList.add('on');
+  setTimeout(()=>$('tName').focus(),250);
+}
+function saveTask(){
+  const name=$('tName').value.trim();
+  if(!name)return $('tName').focus();
+  const freq=$('tFreq').value.trim()||'Custom';
+  const int=Math.max(1,parseInt($('tInt').value)||7);
+  if(S.editTask){
+    const t=S.tasks.find(x=>x.id===S.editTask);
+    t.t=name;t.freq=freq;t.int=int;
+  } else {
+    S.tasks.push({id:Date.now(),t:name,freq,int,last:Date.now()-int*864e5,done:false});
+  }
+  persist();closeScrim('taskScrim');render();checkTaskNotifications(true);
+}
+function closeScrim(id){$(id).classList.remove('on')}
+
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+/* ── Phase 4 (v4.1): weather-aware alerts. Real forecast data from Open-Meteo
+   (free, no API key, CORS-friendly) drives honest, pool-specific cautions —
+   heat + UV burn off free chlorine; rain dilutes water and pulls pH/alkalinity
+   down. Nothing is invented: if we can't fetch real weather, Clarity says so. ── */
+const WX={tmaxHot:90,tmaxScorcher:100,uvHigh:8,uvExtreme:10,rainIn:0.3,rainProb:70};
+let _wxFetching=false;
+
+const US_STATES={al:'alabama',ak:'alaska',az:'arizona',ar:'arkansas',ca:'california',co:'colorado',ct:'connecticut',de:'delaware',fl:'florida',ga:'georgia',hi:'hawaii',id:'idaho',il:'illinois',in:'indiana',ia:'iowa',ks:'kansas',ky:'kentucky',la:'louisiana',me:'maine',md:'maryland',ma:'massachusetts',mi:'michigan',mn:'minnesota',ms:'mississippi',mo:'missouri',mt:'montana',ne:'nebraska',nv:'nevada',nh:'new hampshire',nj:'new jersey',nm:'new mexico',ny:'new york',nc:'north carolina',nd:'north dakota',oh:'ohio',ok:'oklahoma',or:'oregon',pa:'pennsylvania',ri:'rhode island',sc:'south carolina',sd:'south dakota',tn:'tennessee',tx:'texas',ut:'utah',vt:'vermont',va:'virginia',wa:'washington',wv:'west virginia',wi:'wisconsin',wy:'wyoming',dc:'district of columbia'};
+
+async function omGeocode(name){
+  const r=await fetch('https://geocoding-api.open-meteo.com/v1/search?count=10&language=en&format=json&name='+encodeURIComponent(name));
+  if(!r.ok)return [];
+  const d=await r.json();
+  return d.results||[];
+}
+
+// Resolve a free-text location to lat/lon. Handles US ZIPs (Open-Meteo can't — "06450"
+// wrongly matched a Spanish postal code) and "City, State" / "City State" (Open-Meteo
+// returns nothing for a combined string), by ZIP-lookup via Zippopotam and by searching
+// the city alone then filtering the matches by the state/region the owner typed.
+async function geocodeLocation(q){
+  q=(q||'').trim();
+  if(!q)throw new Error('empty');
+  // US 5-digit ZIP → Zippopotam (CORS-enabled, no key)
+  if(/^\d{5}$/.test(q)){
+    const r=await fetch('https://api.zippopotam.us/us/'+q);
+    if(!r.ok)throw new Error('zip not found');
+    const d=await r.json();
+    const p=d.places&&d.places[0];
+    if(!p)throw new Error('zip not found');
+    return {lat:+p.latitude,lon:+p.longitude,label:`${p['place name']}, ${p['state abbreviation']} ${q}`};
+  }
+  // City name, optionally with a state/region (with or without a comma).
+  let city=q, region='';
+  if(q.includes(',')){const parts=q.split(',');city=parts[0].trim();region=parts.slice(1).join(' ').trim();}
+  let results=await omGeocode(city);
+  if(!results.length&&!region){           // e.g. "Meriden Connecticut" — peel the trailing state and retry
+    const toks=q.split(/\s+/);
+    if(toks.length>1){region=toks[toks.length-1];city=toks.slice(0,-1).join(' ');results=await omGeocode(city);}
+  }
+  if(!results.length)throw new Error('not found');
+  let pick=results[0];
+  if(region){                              // disambiguate among same-named places by the state/region typed
+    const rl=region.toLowerCase().replace(/\./g,''), full=US_STATES[rl]||rl;
+    const m=results.find(r=>{
+      const a=(r.admin1||'').toLowerCase(), cc=(r.country_code||'').toLowerCase(), cn=(r.country||'').toLowerCase();
+      return a===full||a.includes(full)||cc===rl||cn===full||cn.includes(rl);
+    });
+    if(m)pick=m;
+  }
+  return {lat:pick.latitude,lon:pick.longitude,label:[pick.name,pick.admin1,pick.country_code].filter(Boolean).join(', ')};
+}
+
+async function setPoolLocation(q){
+  const P=S.poolProfile, query=(q||'').trim();
+  if(!query){P.location=null;P.lat=null;P.lon=null;P.locLabel=null;S._weather=null;S._wxErr=null;persist();render();return;}
+  try{
+    const g=await geocodeLocation(query);
+    P.location=query;P.lat=g.lat;P.lon=g.lon;P.locLabel=g.label;S._wxErr=null;persist();
+    await fetchWeather(true);
+  }catch(e){
+    P.lat=null;P.lon=null;P.locLabel=null;S._weather=null;
+    S._wxErr='Couldn’t find that location. Try “City, State” or a ZIP/postal code.';
+    persist();
+  }
+  render();
+}
+
+async function fetchWeather(force){
+  const P=S.poolProfile;
+  if(P.lat==null||P.lon==null||_wxFetching)return;
+  if(!force&&S._weather&&(Date.now()-S._weather.updatedAt<30*6e4))return; // 30-min cache
+  _wxFetching=true;
+  try{
+    const u='https://api.open-meteo.com/v1/forecast?latitude='+P.lat+'&longitude='+P.lon+
+      '&daily=temperature_2m_max,uv_index_max,precipitation_sum,precipitation_probability_max'+
+      '&temperature_unit=fahrenheit&precipitation_unit=inch&timezone=auto&forecast_days=4';
+    const r=await fetch(u);
+    if(!r.ok)throw new Error('forecast http '+r.status);
+    const d=await r.json();
+    if(!d.daily||!d.daily.time)throw new Error('no daily data');
+    S._weather={updatedAt:Date.now(),label:P.locLabel||P.location,daily:d.daily};S._wxErr=null;
+  }catch(e){
+    S._weather=null;S._wxErr='Couldn’t reach the weather service. I’ll try again later.';
+  }
+  _wxFetching=false;render();
+}
+
+// Deterministic alert engine over the next ~3 days. Only real forecast data — never invented.
+function computeWeatherAlerts(w){
+  if(!w||!w.daily||!w.daily.time)return [];
+  const D=w.daily, n=Math.min(3,D.time.length), alerts=[];
+  let maxT=-999,maxUV=0,maxRain=0,maxProb=0,rainDay=null;
+  for(let i=0;i<n;i++){
+    const t=D.temperature_2m_max&&D.temperature_2m_max[i], uv=D.uv_index_max&&D.uv_index_max[i];
+    const pr=D.precipitation_sum&&D.precipitation_sum[i], pp=D.precipitation_probability_max&&D.precipitation_probability_max[i];
+    if(t!=null&&t>maxT)maxT=t;
+    if(uv!=null&&uv>maxUV)maxUV=uv;
+    if(pr!=null&&pr>maxRain){maxRain=pr;rainDay=D.time[i];}
+    if(pp!=null&&pp>maxProb)maxProb=pp;
+  }
+  const dayName=iso=>{try{return new Date(iso+'T12:00').toLocaleDateString('en-US',{weekday:'short'});}catch(e){return'';}};
+  if(maxT>=WX.tmaxScorcher||maxUV>=WX.uvExtreme){
+    alerts.push({icon:'🔥',level:'high',title:`Scorcher ahead — ${Math.round(maxT)}°F${maxUV>=WX.uvHigh?', UV '+Math.round(maxUV):''}`,
+      text:`High heat and strong sun burn off free chlorine fast. Test in the next day or two, keep FC at the top of its range, and don’t let it dip before a hot afternoon.`});
+  }else if(maxT>=WX.tmaxHot||maxUV>=WX.uvHigh){
+    alerts.push({icon:'☀️',level:'warn',title:`Hot & sunny — up to ${Math.round(maxT)}°F${maxUV>=WX.uvHigh?', UV '+Math.round(maxUV):''}`,
+      text:`Warm, sunny days speed up chlorine loss. Plan to test a bit sooner than usual and keep chlorine near the high end of its range.`});
+  }
+  if(maxRain>=WX.rainIn||maxProb>=WX.rainProb){
+    alerts.push({icon:'🌧️',level:maxRain>=0.75?'high':'warn',title:`Rain likely${rainDay?' '+dayName(rainDay):''}${maxProb?` (${Math.round(maxProb)}%)`:''}`,
+      text:`Rain dilutes your water, can pull pH and alkalinity down, and washes in debris and contaminants. Test and rebalance after it passes, and skim or brush off any runoff.`});
+  }
+  return alerts;
+}
+
+function renderWeatherCard(){
+  const P=S.poolProfile, w=S._weather;
+  let html=`<div class="formcard" style="padding:14px 16px;margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div class="mono" style="font-size:9px;color:var(--aqua);letter-spacing:1.5px;text-transform:uppercase">Weather Watch</div>`;
+  if(P.lat!=null)html+=`<button class="chip" onclick="fetchWeather(true)" style="font-size:10px;padding:3px 9px">↻ Refresh</button>`;
+  html+=`</div>`;
+  if(P.lat==null)return html+`<div style="font-size:12px;color:var(--mut);line-height:1.5">Add your location in ⚙ settings and Clarity will watch the forecast — flagging when heat will burn off chlorine or rain will throw your water off balance.</div></div>`;
+  if(S._wxErr)return html+`<div style="font-size:12px;color:var(--mut);line-height:1.5">${esc(S._wxErr)}</div></div>`;
+  if(!w)return html+`<div style="font-size:12px;color:var(--mut2)">Checking the forecast…</div></div>`;
+  const alerts=computeWeatherAlerts(w), D=w.daily;
+  const t=Math.round((D.temperature_2m_max&&D.temperature_2m_max[0])||0), uv=Math.round((D.uv_index_max&&D.uv_index_max[0])||0);
+  html+=`<div style="font-size:11px;color:var(--mut2);margin-bottom:${alerts.length?'10':'4'}px">${esc(w.label||'')} · today ~${t}°F, UV ${uv}</div>`;
+  if(!alerts.length){
+    html+=`<div style="font-size:12px;color:var(--green);line-height:1.5">✓ Nothing unusual in the next few days — no weather that should throw your chemistry off.</div>`;
+  }else{
+    alerts.forEach(a=>{
+      const col=a.level==='high'?'var(--coral)':'#f0c040';
+      html+=`<div style="display:flex;gap:9px;align-items:flex-start;margin-bottom:9px">
+        <span style="font-size:15px;line-height:1.2">${a.icon}</span>
+        <div style="flex:1"><div style="font-size:12.5px;color:${col};font-weight:600;margin-bottom:1px">${esc(a.title)}</div>
+        <div style="font-size:11.5px;color:var(--mut);line-height:1.45">${esc(a.text)}</div></div>
+      </div>`;
+    });
+  }
+  return html+`<div style="font-size:9px;color:var(--mut2);margin-top:6px">Forecast via Open-Meteo${w.updatedAt?' · '+_timeAgo(w.updatedAt):''}</div></div>`;
+}
+
+function buildWeatherContext(){
+  const w=S._weather;
+  if(!w||!w.daily||!w.daily.time)return'';
+  const D=w.daily, n=Math.min(3,D.time.length), alerts=computeWeatherAlerts(w);
+  let s=`\n\nLOCAL WEATHER (real forecast from Open-Meteo for ${w.label||'the pool location'} — use it to make chlorine/pH advice weather-aware; do not invent values beyond what is listed):`;
+  for(let i=0;i<n;i++){
+    s+=`\n• ${D.time[i]}: high ${Math.round((D.temperature_2m_max&&D.temperature_2m_max[i])||0)}°F, UV ${Math.round((D.uv_index_max&&D.uv_index_max[i])||0)}, rain ${(((D.precipitation_sum&&D.precipitation_sum[i])||0)).toFixed(2)} in (${Math.round((D.precipitation_probability_max&&D.precipitation_probability_max[i])||0)}% chance)`;
+  }
+  if(alerts.length)s+='\nActive weather alerts: '+alerts.map(a=>a.title).join('; ')+'. Reflect these in your advice — heat/UV means chlorine burns off faster (keep FC high, test sooner); rain means dilution and lower pH/alkalinity (rebalance after).';
+  return s;
+}
+
+function logReading(read){
+  const entry={timestamp:Date.now(),gallons:S.gallons,action:null,actionAmt:'',notes:''};
+  KEYS.forEach(k=>entry[k]=read[k]??null);
+  S.history=[entry,...S.history].slice(0,60);
+  // Close the learning loop: check open forecasts against this new reading, then
+  // recompute beliefs (now nudged by their track record) and make the next forecast.
+  if(S.poolModel&&S.poolModel.enabled){
+    normalizePoolModel();
+    verifyPredictions(entry);
+    updatePoolModel();
+  }
+  persist();
+}
+
+/* ── MODELS ── */
+const CHAT_MODEL='qwen/qwen3.5-9b'; // Cheap, fast chat model
+const STRIP_MODEL_PRIMARY='gpt-4o'; // Strip scanning (vision)
+const STRIP_IMAGE_INSTRUCTION='This is a strip reading. The dipped strip is seated in the channel on the LEFT EDGE of the AquaChek card — the vertical column of real color pads on the far-left side, with arrows pointing right to each parameter row. READ EVERY PAD against the row its arrow points to, and give your best estimate for each WITH an honest confidence percent (0-100%). Pads may be pale/near-white (low free/total chlorine, low CYA) and blend into the white channel — read them anyway and set a lower confidence if unsure; faint is not empty. Do NOT refuse, do NOT ask to confirm the strip is there, do NOT ask for a new photo first — always produce the reading and let the confidence percent carry any uncertainty. Only give no reading if this is not a strip/card photo at all, or it is so blurred/dark you cannot even guess. End with the hidden READINGS block including the confidence object.';
+function qualityToLabel(score){
+  if(score>=85) return 'excellent';
+  if(score>=68) return 'good';
+  if(score>=48) return 'fair';
+  if(score>=30) return 'poor';
+  return 'very poor';
+}
+function assessImageQuality(canvas){
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});
+  const {data,width:w,height:h}=ctx.getImageData(0,0,canvas.width,canvas.height);
+  const step=Math.max(1,Math.round(Math.min(w,h)/120));
+  let n=0,sum=0,sum2=0,edge=0,edgeN=0;
+  const prevRow=[];
+  for(let y=0,ry=0;y<h;y+=step,ry++){
+    let left=null;
+    for(let x=0,rx=0;x<w;x+=step,rx++){
+      const i=(y*w+x)*4;
+      const lum=0.2126*data[i]+0.7152*data[i+1]+0.0722*data[i+2];
+      sum+=lum; sum2+=lum*lum; n++;
+      if(left!=null){edge+=Math.abs(lum-left); edgeN++;}
+      const up=prevRow[rx];
+      if(up!=null){edge+=Math.abs(lum-up); edgeN++;}
+      prevRow[rx]=lum;
+      left=lum;
+    }
+  }
+  const mean=sum/Math.max(1,n);
+  const variance=Math.max(0,sum2/Math.max(1,n)-mean*mean);
+  const contrast=Math.sqrt(variance);
+  const edgeAvg=edge/Math.max(1,edgeN);
+  const exposurePenalty=Math.min(45,Math.abs(mean-132)*0.7);
+  const score=Math.round(Math.max(0,Math.min(100,contrast*1.15+edgeAvg*2.2+28-exposurePenalty)));
+  return {score,brightness:Math.round(mean),contrast:Math.round(contrast),edge:Math.round(edgeAvg),label:qualityToLabel(score)};
+}
+function pickStripModel(q){
+  return STRIP_MODEL_PRIMARY;
+}
+function qualityPrompt(q){
+  if(!q) return '';
+  return `\nIMAGE QUALITY: score ${q.score}/100, brightness ${q.brightness}/255, contrast ${q.contrast}, edge ${q.edge}, label ${q.label}. Use this to calibrate confidence: good quality may justify higher confidence; poor quality should push confidence down, but still give the best honest estimate.`;
+}
+
+function buildInsightsContext(){
+  if(S.history.length<3)return'';
+  const h=S.history;
+  const insights=[];
+
+  // 1. FC decay rate (between consecutive readings where no chlorine was added)
+  const fcPairs=[];
+  for(let i=0;i<h.length-1;i++){
+    const cur=h[i],prev=h[i+1];
+    if(cur.chlorine!=null&&prev.chlorine!=null&&cur.action!=='Added Chlorine'&&cur.action!=='Shocked'&&prev.action!=='Added Chlorine'&&prev.action!=='Shocked'){
+      const days=(cur.timestamp-prev.timestamp)/864e5;
+      if(days>0&&days<14){
+        const rate=(prev.chlorine-cur.chlorine)/days;
+        fcPairs.push(rate);
+      }
+    }
+  }
+  if(fcPairs.length>=2){
+    const avg=(fcPairs.reduce((a,b)=>a+b,0)/fcPairs.length).toFixed(2);
+    insights.push(`FC decay rate: approximately ${avg} ppm/day (based on ${fcPairs.length} intervals without chlorine addition)`);
+  }
+
+  // 2. pH trend direction
+  const phVals=h.filter(e=>e.ph!=null).slice(0,10);
+  if(phVals.length>=3){
+    const recent=phVals.slice(0,3).reduce((a,e)=>a+e.ph,0)/3;
+    const older=phVals.slice(-3).reduce((a,e)=>a+e.ph,0)/Math.min(3,phVals.slice(-3).length);
+    const drift=recent-older;
+    if(Math.abs(drift)>0.1){
+      insights.push(`pH trend: ${drift>0?'rising':'falling'} (avg ${older.toFixed(1)} → ${recent.toFixed(1)} over last ${phVals.length} tests)`);
+    } else {
+      insights.push(`pH trend: stable around ${recent.toFixed(1)}`);
+    }
+  }
+
+  // 3. Test frequency
+  if(h.length>=3){
+    const gaps=[];
+    for(let i=0;i<Math.min(h.length-1,10);i++){
+      gaps.push((h[i].timestamp-h[i+1].timestamp)/864e5);
+    }
+    const avgGap=(gaps.reduce((a,b)=>a+b,0)/gaps.length).toFixed(1);
+    insights.push(`Average testing frequency: every ${avgGap} days`);
+  }
+
+  // 4. Days since last test
+  const daysSince=((Date.now()-h[0].timestamp)/864e5).toFixed(1);
+  insights.push(`Days since last test: ${daysSince}`);
+
+  // 5. Action effectiveness (before/after for chlorine additions)
+  const chlorineActions=[];
+  for(let i=0;i<h.length-1;i++){
+    if(h[i].action==='Added Chlorine'||h[i].action==='Shocked'){
+      const before=h[i].chlorine;
+      const after=h[i>0?i-1:0].chlorine;
+      if(before!=null&&after!=null&&i>0){
+        chlorineActions.push({action:h[i].action,before,after,amt:h[i].actionAmt||'unknown amount'});
+      }
+    }
+  }
+  if(chlorineActions.length){
+    const summaries=chlorineActions.slice(0,3).map(a=>
+      `${a.action} (${a.amt}): FC ${a.before} → ${a.after}`
+    );
+    insights.push(`Recent chlorine action results: ${summaries.join('; ')}`);
+  }
+
+  // 6. Recurring issues
+  const issueCounts={};
+  h.slice(0,15).forEach(e=>{
+    KEYS.forEach(k=>{
+      const st=statusOf(e[k],k);
+      if(st&&st!=='OK'){
+        const key=IDEAL[k].short+' '+st;
+        issueCounts[key]=(issueCounts[key]||0)+1;
+      }
+    });
+  });
+  const recurring=Object.entries(issueCounts).filter(([,c])=>c>=3).sort((a,b)=>b[1]-a[1]);
+  if(recurring.length){
+    insights.push(`Recurring issues (last 15 tests): ${recurring.map(([k,c])=>k+' ('+c+'x)').join(', ')}`);
+  }
+
+  // 7. Best/worst parameters
+  const latest=h[0];
+  const perfect=KEYS.filter(k=>latest[k]!=null&&statusOf(latest[k],k)==='OK');
+  const problem=KEYS.filter(k=>latest[k]!=null&&statusOf(latest[k],k)!=='OK');
+  if(perfect.length)insights.push(`Currently ideal: ${perfect.map(k=>IDEAL[k].short).join(', ')}`);
+  if(problem.length)insights.push(`Currently out of range: ${problem.map(k=>IDEAL[k].short+' ('+statusOf(latest[k],k)+')').join(', ')}`);
+
+  return'\n\nPOOL INSIGHTS (computed from history — use these to give specific, data-driven advice):\n'+insights.map(i=>'• '+i).join('\n');
+}
+
+/* ── Pool Model (Phase 1): persistent, confidence-rated beliefs about THIS pool.
+   Every belief is derived from actual history — never invented. Confidence is
+   capped below 100% on purpose: there is always room for the unknown. ── */
+function _stdev(a){if(a.length<2)return 0;const m=a.reduce((x,y)=>x+y,0)/a.length;return Math.sqrt(a.reduce((s,x)=>s+(x-m)*(x-m),0)/a.length);}
+function _clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v));}
+function _timeAgo(ts){if(!ts)return'';const s=(Date.now()-ts)/1000;if(s<60)return'just now';const m=s/60;if(m<60)return Math.round(m)+'m ago';const h=m/60;if(h<24)return Math.round(h)+'h ago';return Math.round(h/24)+'d ago';}
+function _confColor(c){return c>=70?'var(--green)':c>=45?'#f0c040':'var(--mut2)';}
+
+function computeBeliefs(){
+  const h=S.history, beliefs=[], open=[], day=864e5;
+
+  // FC decay — only chlorine-free intervals
+  const fcRates=[];
+  for(let i=0;i<h.length-1;i++){
+    const cur=h[i],prev=h[i+1];
+    if(cur.chlorine!=null&&prev.chlorine!=null&&cur.action!=='Added Chlorine'&&cur.action!=='Shocked'&&prev.action!=='Added Chlorine'&&prev.action!=='Shocked'){
+      const days=(cur.timestamp-prev.timestamp)/day;
+      if(days>0&&days<14)fcRates.push((prev.chlorine-cur.chlorine)/days);
+    }
+  }
+  if(fcRates.length>=2){
+    const mean=fcRates.reduce((a,b)=>a+b,0)/fcRates.length, val=Math.abs(mean);
+    const sd=_stdev(fcRates), consistency=val>0?_clamp(1-sd/val,0,1):0;
+    const conf=Math.round(_clamp(30+fcRates.length*10+consistency*30,30,95));
+    const lo=Math.abs(Math.min(...fcRates)).toFixed(2), hi=Math.abs(Math.max(...fcRates)).toFixed(2);
+    beliefs.push({id:'fc-decay',icon:'📉',label:'Chlorine decay',
+      claim:`Free chlorine drops about ${val.toFixed(2)} ppm/day`,
+      confidence:conf,evidence:`${fcRates.length} chlorine-free intervals`,
+      detail:`spread ${lo}–${hi} ppm/day · consistency ${Math.round(consistency*100)}%`});
+  }else{
+    open.push('Chlorine decay — need 2+ tests with no chlorine added in between');
+  }
+
+  // pH behavior
+  const phV=h.filter(e=>e.ph!=null).slice(0,12);
+  if(phV.length>=3){
+    const diffs=[];
+    for(let i=0;i<phV.length-1;i++)diffs.push(phV[i].ph-phV[i+1].ph); // newer minus older
+    const meanD=diffs.reduce((a,b)=>a+b,0)/diffs.length, dir=Math.sign(meanD);
+    const dirConsistency=dir===0?0:diffs.filter(d=>Math.sign(d)===dir).length/diffs.length;
+    const spanDays=Math.max((phV[0].timestamp-phV[phV.length-1].timestamp)/day,1);
+    const perWeek=Math.abs((phV[0].ph-phV[phV.length-1].ph)/spanDays*7);
+    const conf=Math.round(_clamp(25+phV.length*7+dirConsistency*25,25,90));
+    const net=phV[0].ph-phV[phV.length-1].ph;
+    const claim=Math.abs(net)<0.15
+      ?`pH stays steady around ${phV[0].ph.toFixed(1)}`
+      :`pH tends to ${net>0?'rise':'fall'} ~${perWeek.toFixed(2)}/week`;
+    beliefs.push({id:'ph-drift',icon:Math.abs(net)<0.15?'➡️':(net>0?'📈':'📉'),label:'pH behavior',
+      claim,confidence:conf,evidence:`${phV.length} pH readings`,
+      detail:`direction consistency ${Math.round(dirConsistency*100)}%`});
+  }else{
+    open.push('pH behavior — only '+phV.length+' pH reading'+(phV.length===1?'':'s')+' so far (need 3+)');
+  }
+
+  // Testing rhythm
+  if(h.length>=4){
+    const gaps=[];
+    for(let i=0;i<Math.min(h.length-1,12);i++)gaps.push((h[i].timestamp-h[i+1].timestamp)/day);
+    const mean=gaps.reduce((a,b)=>a+b,0)/gaps.length, sd=_stdev(gaps);
+    const regularity=mean>0?_clamp(1-sd/mean,0,1):0;
+    const conf=Math.round(_clamp(40+gaps.length*5+regularity*20,40,92));
+    beliefs.push({id:'test-cadence',icon:'🗓️',label:'Testing rhythm',
+      claim:`You test about every ${mean.toFixed(1)} days`,
+      confidence:conf,evidence:`${gaps.length} intervals`,
+      detail:`regularity ${Math.round(regularity*100)}%`});
+  }
+
+  // Recurring out-of-range patterns
+  const win=h.slice(0,15);
+  KEYS.forEach(k=>{
+    const measured=win.filter(e=>e[k]!=null);
+    if(measured.length>=4){
+      const offs=measured.filter(e=>statusOf(e[k],k)!=='OK');
+      const lows=measured.filter(e=>statusOf(e[k],k)==='LOW').length;
+      const highs=measured.filter(e=>statusOf(e[k],k)==='HIGH').length;
+      const frac=offs.length/measured.length;
+      if(offs.length>=3&&frac>=0.5){
+        const dirn=lows>=highs?'low':'high';
+        const conf=Math.round(_clamp(35+offs.length*8+frac*25,35,90));
+        beliefs.push({id:'recurring-'+k,icon:'🔁',label:'Recurring pattern',
+          claim:`${IDEAL[k].label} often runs ${dirn}`,
+          confidence:conf,evidence:`${offs.length} of ${measured.length} recent tests`,
+          detail:`target ${IDEAL[k].min}–${IDEAL[k].max}${IDEAL[k].unit?' '+IDEAL[k].unit:''}`});
+      }
+    }else if(measured.length>0&&measured.length<3){
+      open.push(IDEAL[k].label+' — only '+measured.length+' reading'+(measured.length===1?'':'s'));
+    }
+  });
+
+  return {beliefs,open};
+}
+
+/* ── Pool Model Phase 2 (v3.8): predictions, verification, confidence-from-track-record.
+   The loop closes — Clarity forecasts free chlorine from the decay it has LEARNED,
+   then checks each forecast against the next real reading and lets its own hit-rate
+   move its confidence. Every number is computed deterministically: a forecast that
+   can't be grounded in a learned decay rate + a current reading is never made, and a
+   forecast that can't be fairly checked (chlorine was added) is voided, not scored. ── */
+const FC_TOL_MIN=0.5; // ppm — absolute tolerance floor for "the forecast held"
+
+function normalizePoolModel(){
+  const pm=S.poolModel;if(!pm)return;
+  if(!Array.isArray(pm.predictions))pm.predictions=[];
+  if(!Array.isArray(pm.beliefs))pm.beliefs=[];
+  if(!Array.isArray(pm.openQuestions))pm.openQuestions=[];
+  if(!Array.isArray(pm.observations))pm.observations=[]; // owner-confirmed facts (Phase 3), kept separate from computed beliefs
+  if(!pm.version||pm.version<3)pm.version=3;
+}
+
+// Current FC decay rate from chlorine-free intervals (same math the belief uses).
+function _fcDecayRate(){
+  const h=S.history, rates=[], day=864e5;
+  for(let i=0;i<h.length-1;i++){
+    const cur=h[i],prev=h[i+1];
+    if(cur.chlorine!=null&&prev.chlorine!=null&&cur.action!=='Added Chlorine'&&cur.action!=='Shocked'&&prev.action!=='Added Chlorine'&&prev.action!=='Shocked'){
+      const days=(cur.timestamp-prev.timestamp)/day;
+      if(days>0&&days<14)rates.push((prev.chlorine-cur.chlorine)/days);
+    }
+  }
+  if(rates.length<2)return null;
+  return {rate:Math.abs(rates.reduce((a,b)=>a+b,0)/rates.length),n:rates.length};
+}
+
+// Typical days between tests, from real history; bounded to a sane forecast horizon.
+function _testCadenceDays(){
+  const h=S.history,day=864e5;
+  if(h.length<2)return 7;
+  const gaps=[];
+  for(let i=0;i<Math.min(h.length-1,12);i++)gaps.push((h[i].timestamp-h[i+1].timestamp)/day);
+  const m=gaps.reduce((a,b)=>a+b,0)/gaps.length;
+  return (m>0.5&&m<30)?m:7;
+}
+
+// Make one open FC forecast — only if there's a learned decay rate AND a current reading.
+function generateFcPrediction(){
+  const pm=S.poolModel;
+  const d=_fcDecayRate();
+  const latest=S.history[0];
+  if(!d||!latest||latest.chlorine==null)return;            // truthfulness gate: no basis → no forecast
+  if(pm.predictions.some(p=>p.status==='open'&&p.param==='chlorine'))return; // one open FC forecast at a time
+  const day=864e5, horizon=_clamp(_testCadenceDays(),2,10);
+  const dueBy=latest.timestamp+horizon*day;
+  const predicted=Math.max(0,+(latest.chlorine-d.rate*horizon).toFixed(2));
+  const minLine=IDEAL.chlorine.min;
+  const daysToMin=d.rate>0?(latest.chlorine-minLine)/d.rate:null;
+  pm.predictions.unshift({
+    id:'fc-'+latest.timestamp,
+    param:'chlorine',
+    madeAt:Date.now(),
+    baselineTs:latest.timestamp,
+    baselineFc:latest.chlorine,
+    rate:+d.rate.toFixed(3),
+    horizonDays:+horizon.toFixed(1),
+    dueBy,
+    predicted,
+    claim:`Free chlorine should be about ${predicted} ppm by ${new Date(dueBy).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})} if you don't add chlorine`,
+    daysToMin:(daysToMin!=null&&daysToMin>0&&daysToMin<60)?+daysToMin.toFixed(1):null,
+    basedOn:['fc-decay'],
+    status:'open', actual:null, expectedAtActual:null, error:null, verifiedAt:null, note:null
+  });
+  pm.predictions=pm.predictions.slice(0,40); // cap stored forecasts
+}
+
+// Check every open forecast against a freshly logged reading.
+function verifyPredictions(entry){
+  const pm=S.poolModel; let changed=false;
+  pm.predictions.forEach(p=>{
+    if(p.status!=='open'||p.param!=='chlorine')return;
+    if(entry.timestamp<=p.baselineTs||entry.chlorine==null)return; // can't check this one yet
+    const elapsed=(entry.timestamp-p.baselineTs)/864e5;
+    if(elapsed<=0)return;
+    // Chlorine added since the forecast → a decay-only forecast can't be fairly judged. Void, don't penalize.
+    if(entry.action==='Added Chlorine'||entry.action==='Shocked'||entry.chlorine>p.baselineFc+FC_TOL_MIN){
+      p.status='void';p.actual=entry.chlorine;p.verifiedAt=Date.now();p.note='chlorine added before next test — forecast not applicable';changed=true;return;
+    }
+    const expected=Math.max(0,p.baselineFc-p.rate*elapsed);
+    const tol=Math.max(FC_TOL_MIN,expected*0.25);
+    const err=entry.chlorine-expected;
+    p.actual=entry.chlorine;
+    p.expectedAtActual=+expected.toFixed(2);
+    p.error=+err.toFixed(2);
+    p.verifiedAt=Date.now();
+    p.status=Math.abs(err)<=tol?'confirmed':'missed';
+    changed=true;
+  });
+  return changed;
+}
+
+// A belief's forecast track record, derived only from verified outcomes.
+function beliefTrackRecord(id){
+  const ps=S.poolModel.predictions.filter(p=>p.basedOn&&p.basedOn.includes(id)&&(p.status==='confirmed'||p.status==='missed'));
+  return {tested:ps.length,hit:ps.filter(p=>p.status==='confirmed').length};
+}
+// Confidence nudge from track record: centered on a 70% hit-rate, weighted by sample size, bounded.
+function _confAdjFromRecord(tr){
+  if(!tr||tr.tested===0)return 0;
+  const rate=tr.hit/tr.tested, weight=Math.min(tr.tested,5)/5;
+  return Math.round(_clamp((rate-0.7)*40*weight,-20,10));
+}
+// Overall forecast scorecard for the UI.
+function predictionScore(){
+  const ps=S.poolModel.predictions||[];
+  const verified=ps.filter(p=>p.status==='confirmed'||p.status==='missed');
+  return {tested:verified.length,hit:verified.filter(p=>p.status==='confirmed').length,
+    open:ps.filter(p=>p.status==='open'),
+    lastVerified:ps.filter(p=>p.verifiedAt).sort((a,b)=>b.verifiedAt-a.verifiedAt)[0]||null};
+}
+
+function updatePoolModel(){
+  const pm=S.poolModel;
+  if(!pm||!pm.enabled)return;
+  normalizePoolModel();
+  const {beliefs,open}=computeBeliefs();
+  const prev=pm.beliefs||[];
+  beliefs.forEach(b=>{
+    const old=prev.find(p=>p.id===b.id);
+    b.firstObserved=(old&&old.firstObserved)?old.firstObserved:Date.now();
+    b.updatedAt=Date.now();
+    const tr=beliefTrackRecord(b.id);          // closed-loop: verified forecasts move confidence
+    if(tr.tested>0){b.confidence=Math.round(_clamp(b.confidence+_confAdjFromRecord(tr),20,95));b.track=tr;}
+  });
+  pm.beliefs=beliefs;pm.openQuestions=open;pm.updatedAt=Date.now();
+  if(!pm.createdAt)pm.createdAt=Date.now();
+  generateFcPrediction();                        // make the next forecast to check
+  persist();
+}
+function seedPoolModel(){
+  if(S.history.length<3){alert('Log at least 3 tests first — Clarity needs a little history before it can learn anything truthfully.');return;}
+  S.poolModel.enabled=true;
+  if(!S.poolModel.createdAt)S.poolModel.createdAt=Date.now();
+  updatePoolModel();render();
+}
+function refreshPoolModel(){updatePoolModel();render();}
+function disablePoolModel(){if(confirm("Turn off Clarity's pool model? The learned beliefs and forecasts are cleared, but your test history stays.")){S.poolModel={version:3,enabled:false,createdAt:null,updatedAt:null,beliefs:[],openQuestions:[],predictions:[],observations:[]};persist();render();}}
+
+function buildPoolModelContext(){
+  const pm=S.poolModel;
+  if(!pm)return'';
+  let s='';
+  if(pm.enabled&&pm.beliefs.length){
+  s+='\n\nWHAT CLARITY KNOWS ABOUT THIS POOL (a learned model — each belief carries a confidence %; treat anything under ~60% as tentative and say so rather than stating it as fact):';
+  pm.beliefs.forEach(b=>{
+    let line=`\n• ${b.claim} — ${b.confidence}% confidence (from ${b.evidence}`;
+    if(b.track&&b.track.tested)line+=`; forecast track record ${b.track.hit}/${b.track.tested} correct`;
+    s+=line+')';
+  });
+  if(pm.openQuestions.length)s+='\nStill learning (do NOT guess about these): '+pm.openQuestions.join('; ')+'.';
+  // Phase 2 forecasts — deterministic; never invent, alter, or pre-confirm them.
+  const preds=pm.predictions||[];
+  const openP=preds.find(p=>p.status==='open'&&p.param==='chlorine');
+  const verified=preds.filter(p=>p.status==='confirmed'||p.status==='missed');
+  if(openP)s+=`\nOPEN FORECAST (computed by Clarity's deterministic math from the learned decay rate — restate it if useful, but do NOT claim it has come true; it is only checked when the next reading is logged): ${openP.claim} (predicted ${openP.predicted} ppm by ${new Date(openP.dueBy).toLocaleDateString()}).`;
+  if(verified.length){
+    const hit=verified.filter(p=>p.status==='confirmed').length;
+    s+=`\nFORECAST TRACK RECORD: ${hit} of ${verified.length} past chlorine forecasts held within tolerance. Report this honestly; do not overstate the model's accuracy.`;
+  }
+  }
+  if(pm.observations&&pm.observations.length){
+    s+='\n\nOWNER-CONFIRMED FACTS (the owner explicitly confirmed these; treat them as true context. They are stated facts, not measured patterns — do not attach a derived confidence % to them):\n'+pm.observations.map(o=>'• '+o.text).join('\n');
+  }
+  return s;
+}
+
+function renderPoolModelCard(){
+  const pm=S.poolModel;
+  let html=`<div class="formcard" style="padding:14px 16px;margin-bottom:12px">`;
+  html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+    <div class="mono" style="font-size:9px;color:var(--aqua);letter-spacing:1.5px;text-transform:uppercase">What Clarity Knows</div>`;
+  if(pm.enabled&&pm.beliefs.length)html+=`<button class="chip" onclick="refreshPoolModel()" style="font-size:10px;padding:3px 9px">↻ Refresh</button>`;
+  html+=`</div>`;
+
+  if(!pm.enabled){
+    const ready=S.history.length>=3;
+    html+=`<div style="font-size:12px;color:var(--mut);line-height:1.5;margin-bottom:10px">Clarity can build a model of <em>your</em> pool — how fast chlorine fades, how pH drifts, your testing rhythm — each with a confidence level so you always know how sure it is. Nothing is invented; it's all from your own test history.</div>`;
+    if(ready)html+=`<button class="chip on" onclick="seedPoolModel()" style="font-size:12px;padding:7px 14px">✨ Build my pool model</button>`;
+    else html+=`<div style="font-size:11px;color:var(--mut2)">Log ${3-S.history.length} more test${3-S.history.length===1?'':'s'} and this unlocks.</div>`;
+    html+=`</div>`;return html;
+  }
+
+  if(!pm.beliefs.length){
+    html+=`<div style="font-size:12px;color:var(--mut);line-height:1.5">I'm watching, but I don't have a confident pattern yet. Keep logging tests — especially pairs where you don't add chlorine in between — and beliefs will appear here.</div>`;
+  }else{
+    pm.beliefs.forEach(b=>{
+      const col=_confColor(b.confidence);
+      html+=`<div style="margin-bottom:11px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+          <span style="font-size:12.5px;color:var(--txt)">${b.icon||''} ${b.claim}</span>
+          <span class="mono" style="font-size:10px;color:${col};white-space:nowrap">${b.confidence}%</span>
+        </div>
+        <div style="height:4px;background:rgba(255,255,255,.06);border-radius:3px;margin:5px 0 3px;overflow:hidden">
+          <div style="height:100%;width:${b.confidence}%;background:${col};border-radius:3px"></div>
+        </div>
+        <div style="font-size:9.5px;color:var(--mut2)">from ${b.evidence}${b.detail?' · '+b.detail:''}</div>
+      </div>`;
+    });
+  }
+
+  // Phase 2: forecasts — the closed loop made visible.
+  if(pm.beliefs.length){
+    const sc=predictionScore();
+    if(sc.tested||sc.open.length||(!_fcDecayRate())){
+      html+=`<div class="mono" style="font-size:8.5px;color:var(--mut2);letter-spacing:1px;text-transform:uppercase;margin:12px 0 6px;padding-top:10px;border-top:1px solid var(--line)">Forecasts</div>`;
+    }
+    if(sc.tested){
+      const pct=Math.round(sc.hit/sc.tested*100), col=_confColor(pct);
+      html+=`<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+          <span style="font-size:12.5px;color:var(--txt)">🎯 Forecasts that held</span>
+          <span class="mono" style="font-size:10px;color:${col};white-space:nowrap">${sc.hit}/${sc.tested} · ${pct}%</span>
+        </div>
+        <div style="height:4px;background:rgba(255,255,255,.06);border-radius:3px;margin:5px 0 3px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${col};border-radius:3px"></div>
+        </div>`;
+    }
+    const lv=sc.lastVerified;
+    if(lv&&lv.status==='confirmed')html+=`<div style="font-size:11px;color:var(--green);margin-top:6px;line-height:1.4">✓ Last forecast held — FC came in at ${lv.actual} ppm (expected ~${lv.expectedAtActual}).</div>`;
+    else if(lv&&lv.status==='missed')html+=`<div style="font-size:11px;color:#f0c040;margin-top:6px;line-height:1.4">✗ Last forecast was off by ${Math.abs(lv.error)} ppm (got ${lv.actual}, expected ~${lv.expectedAtActual}) — confidence adjusted.</div>`;
+    else if(lv&&lv.status==='void')html+=`<div style="font-size:11px;color:var(--mut2);margin-top:6px;line-height:1.4">↩ Last forecast set aside — chlorine was added before the next test, so it couldn't be fairly checked.</div>`;
+    if(sc.open.length){
+      const p=sc.open[0];
+      html+=`<div style="font-size:11.5px;color:var(--aqua);margin-top:8px;line-height:1.45">🔮 ${p.claim}.${p.daysToMin?` At this rate FC reaches the ${IDEAL.chlorine.min} ppm minimum in ~${Math.round(p.daysToMin)} day${Math.round(p.daysToMin)===1?'':'s'}.`:''}</div>
+        <div style="font-size:9px;color:var(--mut2);margin-top:2px">A forecast Clarity will check against your next test.</div>`;
+    }else if(!_fcDecayRate()){
+      html+=`<div style="font-size:11px;color:var(--mut2);margin-top:2px;line-height:1.4">No chlorine forecast yet — I need a couple of tests with no chlorine added in between before I can predict how fast it fades.</div>`;
+    }
+  }
+
+  if(pm.openQuestions&&pm.openQuestions.length){
+    html+=`<div class="mono" style="font-size:8.5px;color:var(--mut2);letter-spacing:1px;text-transform:uppercase;margin:10px 0 6px">Still learning</div>`;
+    pm.openQuestions.slice(0,5).forEach(q=>{html+=`<div style="font-size:11px;color:var(--mut2);margin-bottom:3px;line-height:1.4">• ${q}</div>`;});
+  }
+
+  if(pm.observations&&pm.observations.length){
+    html+=`<div class="mono" style="font-size:8.5px;color:var(--mut2);letter-spacing:1px;text-transform:uppercase;margin:12px 0 6px;padding-top:10px;border-top:1px solid var(--line)">You've told me</div>`;
+    pm.observations.slice(0,6).forEach(o=>{html+=`<div style="font-size:11.5px;color:var(--txt);margin-bottom:3px;line-height:1.4">• ${esc(o.text)}</div>`;});
+    html+=`<div style="font-size:9px;color:var(--mut2);margin-top:2px">Facts you confirmed — kept separate from what Clarity measured.</div>`;
+  }
+
+  html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:9px;border-top:1px solid var(--line)">
+    <span style="font-size:9px;color:var(--mut2)">${pm.updatedAt?'Updated '+_timeAgo(pm.updatedAt):''}</span>
+    <span onclick="disablePoolModel()" style="font-size:9px;color:var(--mut2);cursor:pointer;text-decoration:underline">turn off</span>
+  </div></div>`;
+  return html;
+}
+
+function buildProfileContext(){
+  const P=S.poolProfile;
+  const parts=[];
+  if(P.type)parts.push('Sanitizer: '+P.type);
+  if(P.surface)parts.push('Surface: '+P.surface);
+  if(P.filter)parts.push('Filter: '+P.filter);
+  if(P.climate)parts.push('Climate: '+P.climate);
+  if(P.sun)parts.push('Sun: '+P.sun);
+  if(P.water)parts.push('Water source: '+P.water);
+  if(P.usage)parts.push('Usage: '+P.usage);
+  if(P.equipment&&P.equipment.length)parts.push('Equipment: '+P.equipment.join(', '));
+  if(!parts.length)return'';
+  return'\n\nPOOL PROFILE:\n'+parts.join('\n');
+}
+
+function buildHistoryContext(){
+  if(!S.history.length)return'';
+  const recent=S.history.slice(0,8);
+  let ctx='\n\nPOOL HISTORY (last '+recent.length+' saved tests, newest first):\n';
+  recent.forEach(e=>{
+    const d=new Date(e.timestamp);
+    const ds=d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    const flags=[];
+    KEYS.forEach(k=>{
+      const v=e[k],st=statusOf(v,k);
+      const label=IDEAL[k].short;
+      if(v==null){flags.push(label+':—');}
+      else if(st==='OK'){flags.push(label+':'+v);}
+      else{flags.push(label+':'+v+'('+st+')');}
+    });
+    const issues=KEYS.filter(k=>{const v=e[k];return v!=null&&statusOf(v,k)!=='OK';});
+    const note=issues.length===0?'all OK':issues.map(k=>IDEAL[k].short+' '+statusOf(e[k],k).toLowerCase()).join(', ');
+    ctx+='• '+ds+' — '+flags.join(' · ')+' — '+note;
+    if(e.action)ctx+=' | Action: '+e.action+(e.actionAmt?' ('+e.actionAmt+')':'');
+    if(e.notes)ctx+=' | Notes: '+e.notes;
+    ctx+='\n';
+  });
+  ctx+='Use this history to spot TRENDS and CAUSE-EFFECT patterns. Compare today\'s reading to past ones. When the user logged an action (e.g. "Added Chlorine · 2 lbs"), check if the NEXT reading shows the expected result. Point out what\'s working and what isn\'t.';
+  return ctx;
+}
+// Reference chart is no longer embedded. As of v3.1.0 the user includes the
+// physical AquaChek reference card in the same photo as the strip, so Claude
+// calibrates against it under identical lighting instead of a stale image.
+const AQUA7_SCALE=`AquaChek SELECT CONNECT 7-in-1 strip read against its physical reference card.
+
+CARD LAYOUT — READ THIS CAREFULLY:
+The reference card has a built-in vertical CHANNEL/SLOT running down its LEFT EDGE. The user places the dipped test strip into that left channel, so the real strip sits as a vertical column of color pads along the far-left side of the card. Printed ARROWS point from each strip pad rightward to that pad's matching parameter ROW. The large grid of color squares on the RIGHT is the printed reference scale.
+
+So in one photo you have, from left to right: (a) the actual dipped strip pads in the left channel, (b) arrows, (c) the printed reference rows. Do NOT mistake the strip in the left channel for part of the printed card art — that vertical column of pads on the far left IS the strip you must read. If that left column is missing (no strip placed in the channel), there is nothing to read — ask for a photo with the strip in the channel.
+
+PAD-TO-ROW ORDER (top to bottom in the left channel = the strip from END/TIP pad down to the pad NEAREST THE HANDLE). Each lines up with the row its arrow points to:
+1. TOTAL HARDNESS (top pad / END PAD) — ppm: 0 (deep blue) · 100 (blue) · 250 (blue-violet) · 500 (violet) · 1000 (magenta). Pool OK ~250-500.
+2. TOTAL CHLORINE / TOTAL BROMINE — Total Chlorine ppm: 0 · 0.5 · 1 · 3 · 5 · 10 (pale yellow -> green; greener = higher). Total Bromine ppm same colors: 0 · 1 · 2 · 5 · 10 · 20.
+3. FREE CHLORINE — ppm: 0 · 0.5 · 1 · 3 · 5 · 10 (near-white/pale -> pink/purple; more purple = higher). Pool OK 1-3.
+4. pH — 6.2 (orange) · 6.8 (orange-red) · 7.2 (red) · 7.8 (red-magenta) · 8.4 (magenta). OK 7.2-7.8.
+5. TOTAL ALKALINITY — ppm: 0 (yellow) · 40 · 80 · 120 · 180 · 240 (teal/green); greener & darker = higher. OK 80-120.
+6. CYANURIC ACID / STABILIZER (bottom pad / PAD NEAREST HANDLE) — ppm: 0 (orange) · 30-50 (IDEAL) · 100 · 150 · 300 (pink/magenta); pinker = higher. OK 30-50.
+
+Read each physical pad in the left channel by comparing it to the swatches in the row its arrow points to, in THIS photo, under the SAME light. That same-photo, same-light comparison is the whole point.`;
+
+const SYSTEM=`You are Clarity, a personal pool maintenance co-pilot for one inground-pool owner who uses AquaChek 7-Way ("Aqua 7") test strips.
+
+YOUR ROLE: You are learning this person's pool alongside them. You remember patterns, anticipate problems, and improve your advice as you learn more over weeks and months. This is a partnership—you're both getting smarter about their pool together.
+
+HONESTY VIA CONFIDENCE, NOT REFUSAL. Your job on a strip photo is to ALWAYS give your best read of every pad and attach an honest CONFIDENCE PERCENT (0-100%) to each. You do not refuse a strip reading for quality reasons — instead you read and let the confidence number carry the uncertainty. A test strip is approximate, so brackets + a confidence % are the honest output, never fake precision and never a blanket "I can't read this." Examples: a clear daylight pad might be 85%; a pale or shadowed pad might be 40%; a pad with glare directly on it might be 20%. Low confidence is fine and useful — it tells the user to retest — but it must be a NUMBER on a real best-estimate, not a refusal. NEVER invent certainty: do not report a precise value at high confidence for a pad you cannot actually resolve, and do not raise your confidence just because the user insists. Calibrate the percent to what you can genuinely see. The only time you give NO reading is when there is no image, the image is not a strip/card at all, or it is so destroyed (total blur/darkness) that you cannot even guess — and then you say so plainly rather than refuse on mere imperfection.
+
+IMAGES:
+- You have vision. If NO image is attached, do NOT pretend to see one and do NOT invent readings. Say: "I don't see a photo attached. Tap the camera or upload button to add one, then send."
+- For a strip reading, the photo shows the AquaChek reference card with the dipped strip seated in the CHANNEL on the card's LEFT EDGE (see CARD LAYOUT below). The strip is the vertical column of pads on the far left; the printed reference rows are to its right; arrows connect each pad to its row. Read each left-channel pad against the row its arrow points to, in this same photo and light.
+- READ ON THE FIRST PASS. When a strip/card photo is attached, assume the strip IS in the channel and read it immediately. Do NOT open with a clarifying question ("is the strip in the channel?", "can you confirm...?") or ask for a new photo before attempting — the user framed the shot to be read. Give the bracketed values, then note any low-confidence pads.
+- STRIP REQUIRED (very narrow): When a card photo is sent for a reading, a strip is ALMOST ALWAYS in the channel — treat "empty" as the rare exception, not a default suspicion. CRITICAL: the strip's pads are frequently PALE, faint, or washed-out — free chlorine and low total chlorine read near-white, low cyanuric acid is pale, and against the card's WHITE channel and white body these low-saturation pads can look like bare laminate. PALE OR FAINT PADS ARE NOT AN EMPTY CHANNEL. Do NOT conclude the channel is empty just because the pads are light, low-contrast, or hard to distinguish from white — look closely along the far-left edge for subtle color blocks (even very faint ones) and read them. Only treat the channel as empty if it is unmistakably bare plastic with zero pads of any shade, which almost never happens during a real test.
+- Do NOT mistake the strip in the left channel for printed card artwork. That far-left column of real pads IS the strip to read.
+- If the photo is NOT a test strip/card at all (algae, water, equipment, product label, etc.), none of this applies — just analyze the photo directly.
+- Photos persist across turns. If you gave a reading earlier and the user asks a follow-up, re-examine the same attached photo and stay consistent. Do NOT claim you never saw an image, and do NOT recant a real reading.
+
+${AQUA7_SCALE}
+
+HOW TO READ THE STRIP:
+1. Locate the strip in the card's LEFT CHANNEL — the vertical column of real pads on the far-left edge. Pads may be pale/faint and blend with the white channel; faint pads still count — that is NOT an empty channel. Only if the slot is unmistakably bare plastic with zero pads should you stop and ask for a photo with the strip placed in it.
+2. Orient by position: the TOP pad in the channel is TOTAL HARDNESS (end/tip), the BOTTOM pad is CYANURIC ACID (nearest the handle). The card itself labels these "END PAD" (top) and "PAD NEAREST HANDLE" (bottom). Use that to map each pad to its row in order.
+3. For EACH pad, follow its arrow to its parameter row and compare the pad's color to that row's printed swatches IN THIS PHOTO (not a remembered color). Report the NEAREST swatch value or a BRACKET between two swatches (e.g., "between 1 and 3 ppm, closer to 3"). Never report false precision like "1.8 ppm".
+4. DEFAULT TO READING. Ordinary indoor light, warm/yellow cast, dimness, an angled shot, or some sheen on the lamination are NOT reasons to refuse — that is exactly what the in-frame card corrects for. If a human could tell the swatches apart in this photo, you can too: calibrate against the card and give your best bracketed read, noting confidence is "moderate" if the light is poor. Only decline a reading when the photo is GENUINELY unreadable: severe blur, so dark/blown-out you cannot distinguish the reference swatches from each other, or glare sitting directly on the strip pads. If just ONE pad is obscured (glare/shadow on that pad), read the rest and skip only that one.
+5. The strip and card share the same light, so a warm/yellow/dim cast shifts BOTH together — anchor on the card's white border and known swatches (e.g. the 0/LOW ends, the IDEAL markers) to correct for it, then read. Do this instead of refusing. Reading slightly hedged beats no reading.
+
+FOR STRIP READINGS — keep your TEXT SHORT. The app auto-generates a visual results card with gauges, status, confidence %, and dosing from your READINGS block. Instead of listing every parameter:
+- One quick summary sentence (e.g., "Looks pretty good — just pH is a touch high.")
+- If your overall read was low-confidence (e.g. poor light, faint pads), say so in one honest line and suggest a retest in bright even daylight — but still give the reading.
+- For anything out of range: name it, give the fix with exact amount for this ~${'{POOL_SIZE}'}-gallon pool, and briefly say why (1-2 sentences max)
+- If everything is in range, say so in one sentence
+- Mention fix ORDER if multiple are off: alkalinity → pH → chlorine → stabilizer/hardness
+
+Keep it conversational, not clinical. The visual card handles the rest.
+
+LEARNING & PERSONALIZATION:
+- When you see a new reading, compare it to their historical baseline (if available)
+- Point out patterns: "Your FC typically drops X ppm/day in summer heat"
+- Notice anomalies: "This is unusual — did something change?"
+- Ask clarifying questions based on their history: "Last time this happened, you tried X. Want to try that again?"
+- Anticipate issues: Based on your pool knowledge, suggest proactive maintenance
+- Update your mental model after each session — you're getting smarter about their specific pool
+
+PROACTIVE COACHING (use POOL INSIGHTS data when available):
+- PATTERN RECOGNITION: Reference computed decay rates, pH drift, and recurring issues. Say "Your FC drops about 0.5 ppm/day" not "chlorine can decay."
+- ANOMALY DETECTION: If today's reading contradicts established patterns, flag it: "This is unusual for your pool — your FC is normally stable at this level. Did something change?"
+- PREDICTIVE GUIDANCE: Use decay rates + days since last test to predict: "Based on your FC decay rate of 0.5/day, you'll likely need chlorine by Thursday. I'd test Wednesday to confirm."
+- BEFORE/AFTER TRACKING: When action results data is available, evaluate effectiveness: "You added 2 lbs chlorine and FC rose from 1.5 to 3.2 — that dosage is working well for your pool."
+- RECURRING ISSUES: If a parameter is consistently out of range, address the root cause rather than just the symptom: "Your pH has been high in 5 of the last 10 tests. With your water source and climate, this is likely caused by..."
+- TEST FREQUENCY: If they're testing too often or not enough based on their pool's behavior, gently suggest adjustments.
+- SEASONAL AWARENESS: Factor in the current date, their climate profile, and historical patterns. Summer = higher chlorine demand, algae risk. Winter = reduced testing needed.
+
+OTHER POOL PHOTOS (not a strip): identify water clarity/color, algae type, equipment/filter/pump problems, surface/liner damage, or read a chemical label. Give specific, actionable advice based on their pool.
+
+GENERAL QUESTIONS (no photo): help with chemistry, balancing, maintenance schedules, troubleshooting, dosing, and seasonal advice—specific, practical, concise, and personalized to their pool situation.
+
+STRUCTURED OUTPUT: Whenever the photo is a test strip/card, append a hidden data block at the VERY END of your response on its own line, with your best-estimate value for EVERY pad plus a confidence percent (0-100 integer) for each:
+<!--READINGS:{"chlorine":X,"totalChlorine":X,"ph":X,"alkalinity":X,"hardness":X,"cyanuric":X,"confidence":{"chlorine":N,"totalChlorine":N,"ph":N,"alkalinity":N,"hardness":N,"cyanuric":N}}-->
+Always give a numeric best estimate for every pad you can see at all (use the single best number, e.g. "between 1 and 3, closer to 3" -> 3) and set its confidence honestly. Use null for a value ONLY if that one pad is truly impossible to judge (and set its confidence to 0). Include this block for ANY strip/card photo. Do NOT include it for general questions or non-strip photos.
+
+ACTIONS YOU CAN DO FOR THE OWNER (the agent layer). You can do the bookkeeping instead of just telling the owner to. You NEVER perform an action directly and you NEVER claim something is saved — you PROPOSE actions and the app shows the owner a ✓/✗ confirm chip; only their tap saves it. Propose an action ONLY when the owner clearly wants it (they asked, or they just told you something concrete worth recording) — never speculatively, and never invent details they didn't give. Available tools:
+- record_action — log a treatment/dose on their history. args: {"action": one of "Added Chlorine"|"Shocked"|"pH Up"|"pH Down"|"Added Alkalinity"|"Backwashed"|"Brushed"|"Added CYA", "amount": "2 lbs cal-hypo" (optional), "note": "" (optional)}. Use after they tell you they added/did something, or to log a dose you recommended and they agreed to.
+- set_reminder — a dated reminder. args: {"title": "Test water again", "inDays": 3}.
+- update_schedule — add a recurring maintenance task. args: {"title": "Brush walls", "int": 7 (days between)}.
+- update_profile — save a durable pool fact. args either {"field": one of "type"|"surface"|"filter"|"climate"|"sun"|"water"|"usage"|"equipment", "value": "..."} or {"note": "free-text fact"}.
+- record_belief — note a qualitative fact the OWNER stated about their pool (e.g. "pump runs 8 hrs/day", "kids swim daily in summer"). args: {"observation": "..."}. This is stored as an owner-confirmed fact, separate from your measured beliefs — do not use it to assert a pattern you only suspect.
+When (and only when) you want to propose one or more actions, append a hidden block at the VERY END of your reply, on its own line, after any READINGS block:
+<!--ACTIONS:[{"tool":"record_action","args":{"action":"Shocked","amount":"2 lbs"},"label":"Shocked · 2 lbs cal-hypo"}]-->
+Rules: max 4 actions; always include a short human "label"; only tools listed above; omit the block entirely when no action is warranted. In your visible text, briefly say what you'll log (e.g. "I can log that shock for you — confirm below."), never that it's already done.
+
+Today is ${new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}.`;
+
+const MAX_HISTORY_MSGS=10;
+const DAILY_LIMIT=30;
+const COOLDOWN_MS=3000;
+let lastCallTime=0;
+
+function checkUsage(){
+  const today=new Date().toDateString();
+  const usage=store.get('usage')||{date:today,count:0};
+  if(usage.date!==today){usage.date=today;usage.count=0;}
+  if(usage.count>=DAILY_LIMIT)throw new Error(`Daily limit of ${DAILY_LIMIT} requests reached. Resets tomorrow.`);
+  usage.count++;store.set('usage',usage);
+}
+
+async function callClaude(body){
+  // Demo mode — return mock responses instead of calling OpenRouter
+  const hasImage = body.messages?.some(m => Array.isArray(m.content) && m.content.some(c => c.type === 'image'));
+  if (hasImage) {
+    await new Promise(r => setTimeout(r, 1500));
+    return `I can see your test strip! Here's what I'm reading:
+
+**Free Chlorine:** 1.2 ppm — OK, right at the low end
+**Total Chlorine:** 1.5 ppm
+**pH:** 7.4 — nice, right in the sweet spot
+**Total Alkalinity:** 90 ppm — a tad low but acceptable
+**Calcium Hardness:** 280 ppm — good
+**Cyanuric Acid (CYA):** 35 ppm — in range
+
+Everything looks balanced overall. Your chlorine is on the lower side so keep an eye on it — if you've had heavy swim traffic or recent rain it may drop further. The pH is perfect. Alkalinity could use a small bump to stabilize pH but it's not urgent.
+
+<!--READINGS:{"chlorine":1.2,"totalChlorine":1.5,"ph":7.4,"alkalinity":90,"hardness":280,"cyanuric":35,"confidence":{"chlorine":85,"totalChlorine":80,"ph":92,"alkalinity":78,"hardness":75,"cyanuric":82}}-->`;
+  }
+  await new Promise(r => setTimeout(r, 800));
+  return "Based on your pool's history and profile, things are looking pretty good. Your chlorine is hanging in there at 1.2 ppm — it's been drifting down at about 0.4 ppm/day, so test again in a couple days. The pH is stable at 7.4 which is ideal. Your alkalinity's been trending slightly low, might want to bump it up to 100 ppm for better pH stability. Overall your pool is in solid shape — nice work!";
+}
+
+async function sendMessage(text){
+  if(S.thinking)return;
+  const hasImage=!!S._pendingImage;
+  const hasText=!!text;
+  if(!hasImage&&!hasText)return;
+  if(Date.now()-lastCallTime<COOLDOWN_MS)return;
+  const msgText=text||(hasImage?'Please analyze this image as a pool expert.':'');
+  const msg={role:'user',content:msgText};
+  let imageData=null;
+  if(hasImage){
+    // Verify we actually have base64 data before claiming image is attached
+    if(!S._pendingImage.base64||S._pendingImage.base64.length<100){
+      S.messages.push({role:'assistant',content:'⚠ Image failed to process. Please try attaching it again.'});
+      S._pendingImage=null;renderAttachPreview();render();return;
+    }
+    imageData={base64:S._pendingImage.base64,mediaType:S._pendingImage.mediaType,preview:S._pendingImage.preview,quality:S._pendingImage.quality||null};
+    msg._image=imageData.preview;
+    msg._imageSize=imageData.base64.length; // track for confirmation
+    msg._imgB64=imageData.base64; msg._imgMedia=imageData.mediaType; // persist so follow-up turns can re-examine the same photo
+    msg._imgQuality=imageData.quality||null;
+    console.log('[Clarity] Image attached:',Math.round(imageData.base64.length/1024)+'KB base64,',imageData.mediaType,imageData.quality?`quality ${imageData.quality.score}/100 (${imageData.quality.label})`:'');
+    S._pendingImage=null;
+    renderAttachPreview();
+  }
+  S.messages.push(msg);
+  $('msgIn').value='';
+  $('sendBtn').className='send';
+  S.thinking=true;render();
+  try{
+    const raw=[];
+    const filtered=S.messages.filter(m=>m.role==='user'||m.role==='assistant');
+    const recent=filtered.slice(-MAX_HISTORY_MSGS);
+    let imageIncluded=false;
+
+    // keep the actual image in view. Cap to the 2 newest images to stay under the request size limit; chart rides with the latest.
+    const imgIdx=recent.map((m,i)=>m._imgB64?i:-1).filter(i=>i>=0);
+    const latestImg=imgIdx.length?imgIdx[imgIdx.length-1]:-1;
+    const latestImgQuality=latestImg>=0?recent[latestImg]._imgQuality||null:null;
+    const keepImgs=new Set(imgIdx.slice(-2));
+
+    recent.forEach((m,i)=>{
+      if(m._imgB64&&keepImgs.has(i)){
+        const content=[];
+        if(i===latestImg){
+          content.push({type:'text',text:'This is a strip reading. The dipped strip is seated in the channel on the LEFT EDGE of the AquaChek card — the vertical column of real color pads on the far-left side, with arrows pointing right to each parameter row. READ EVERY PAD against the row its arrow points to, and give your best estimate for each WITH an honest confidence percent (0-100%). Pads may be pale/near-white (low free/total chlorine, low CYA) and blend into the white channel — read them anyway and set a lower confidence if unsure; faint is not empty. Do NOT refuse, Do NOT ask to confirm the strip is there, Do NOT ask for a new photo first — always produce the reading and let the confidence percent carry any uncertainty. Only give no reading if this is not a strip/card photo at all, or it is so blurred/dark you cannot even guess. End with the hidden READINGS block including the confidence object.'});
+        }
+        content.push({type:'image',source:{type:'base64',media_type:m._imgMedia,data:m._imgB64}});
+        content.push({type:'text',text:m.content||'Please analyze this image as a pool expert.'});
+        raw.push({role:'user',content});
+        if(m===msg)imageIncluded=true;
+
+      } else if(m._imgB64){
+
+      } else {
+        raw.push({role:m.role,content:m.content});
+      }
+    });
+    // If we had imageData but it wasn't included (edge case), warn
+    if(imageData&&!imageIncluded){
+      console.warn('[Clarity] Image was attached but not included in API call — message may have been outside recent history window');
+      S.messages.push({role:'assistant',content:'⚠ Something went wrong attaching the image. Please try again.'});
+      S.thinking=false;render();return;
+    }
+    if(imageData&&imageIncluded){
+      console.log('[Clarity] Image confirmed in API payload');
+    }
+    // Sanitize: must start with 'user' and strictly alternate roles
+    const api=[];
+    for(const m of raw){
+      if(api.length===0&&m.role!=='user') continue;
+      if(api.length>0&&api[api.length-1].role===m.role){
+        api[api.length-1]=m;
+        continue;
+      }
+      api.push(m);
+    }
+    // Final verification: check that the last user message in api still has the image
+    if(imageData&&imageIncluded){
+      const lastUser=api.filter(m=>m.role==='user').pop();
+      if(!lastUser||!Array.isArray(lastUser.content)){
+        console.error('[Clarity] Image lost during message sanitization!');
+        S.messages.push({role:'assistant',content:'⚠ Image was lost while preparing the request. Please try again.'});
+        S.thinking=false;render();return;
+      }
+    }
+    const systemPrompt=SYSTEM.replace('{POOL_SIZE}',S.gallons.toLocaleString());
+    updatePoolModel(); // refresh beliefs before Clarity reasons (runs only if the model is enabled)
+    const historyCtx=buildHistoryContext();
+    const profileCtx=buildProfileContext();
+    const insightsCtx=buildInsightsContext();
+    const modelCtx=buildPoolModelContext();
+    const weatherCtx=buildWeatherContext();
+    const notesCtx=S.poolNotes?`\n\nPOOL NOTES (owner's description of their pool situation — factor this into every answer):\n${S.poolNotes}`:'';
+    const hasImage=api.some(m=>Array.isArray(m.content)&&m.content.some(c=>c.type==='image'));
+    const model=hasImage?pickStripModel(latestImgQuality):CHAT_MODEL;
+    const stripCtx=hasImage?STRIP_IMAGE_INSTRUCTION+qualityPrompt(latestImgQuality):'';
+    const reply=await callClaude({model,max_tokens:hasImage?4200:2000,...(hasImage?{thinking:{type:'enabled',budget_tokens:2000},temperature:1}:{}),
+      system:systemPrompt+`\nUser's pool: inground, ~${S.gallons.toLocaleString()} gallons.`+profileCtx+notesCtx+weatherCtx+modelCtx+insightsCtx+historyCtx+stripCtx,messages:api});
+    S.messages.push({role:'assistant',content:reply});
+
+  }catch(e){S.messages.push({role:'assistant',content:`⚠ ${e.message}`});}
+  S.thinking=false;render();
+}
+
+function compressImage(file,maxW=1500){
+  return new Promise((res,rej)=>{
+    try{
+      const img=new Image(),url=URL.createObjectURL(file);
+      img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('Failed to load image'));};
+      img.onload=()=>{
+        try{
+          const s=Math.min(1,maxW/img.width),c=document.createElement('canvas');
+          c.width=img.width*s;c.height=img.height*s;
+          const ctx=c.getContext('2d');
+          ctx.drawImage(img,0,0,c.width,c.height);
+          const quality=assessImageQuality(c);
+          URL.revokeObjectURL(url);
+          c.toBlob(bl=>{
+            if(!bl){rej(new Error('Canvas toBlob failed'));return;}
+            const fr=new FileReader();
+            fr.onerror=()=>rej(new Error('FileReader failed'));
+            fr.onload=()=>{
+              const b64=fr.result.split(',')[1];
+              if(!b64||b64.length<50){rej(new Error('Base64 conversion produced empty result'));return;}
+              console.log('[Clarity] Image compressed:',img.width+'x'+img.height,'→',c.width+'x'+c.height,Math.round(b64.length/1024)+'KB',`quality ${quality.score}/100 (${quality.label})`);
+              res({base64:b64,mediaType:'image/jpeg',quality});
+            };
+            fr.readAsDataURL(bl);
+          },'image/jpeg',.92);
+        }catch(e){rej(e);}
+      };
+      img.src=url;
+    }catch(e){rej(e);}
+  });
+}
+
+async function attachImage(file){
+  if(!file||!file.type.startsWith('image/'))return;
+  try{
+    const {base64,mediaType}=await compressImage(file);
+    const preview=URL.createObjectURL(file);
+    S._pendingImage={base64,mediaType,preview,file};
+    renderAttachPreview();
+    $('msgIn').focus();
+  }catch(e){
+    console.error('[Clarity] Image processing failed:',e);
+    S.messages.push({role:'assistant',content:`⚠ Couldn't process that image: ${e.message}. Try a different photo.`});
+    render();
+  }
+}
+function renderAttachPreview(){
+  const el=$('attachPreview');
+  if(!S._pendingImage){el.innerHTML='';return;}
+  el.innerHTML=`<div class="attach-preview">
+    <img src="${S._pendingImage.preview}">
+    <div class="attach-info">
+      <div class="attach-label">📎 Photo attached</div>
+      <div class="attach-hint">Type a question about what you see, or just hit send and I'll analyze it.</div>
+    </div>
+    <button class="attach-rm" id="attachRmBtn">✕</button>
+  </div>`;
+  $('attachRmBtn').onclick=()=>{
+    if(S._pendingImage?.preview)URL.revokeObjectURL(S._pendingImage.preview);
+    S._pendingImage=null;renderAttachPreview();
+  };
+  $('sendBtn').className='send live';
+}
+
+/* ── Event wiring ── */
+$('gearBtn').onclick=()=>{S.setupOpen=!S.setupOpen;renderSetup()};
+$('sendBtn').onclick=()=>{const v=$('msgIn').value.trim();if(v||S._pendingImage)sendMessage(v)};
+$('msgIn').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();const v=$('msgIn').value.trim();if(v||S._pendingImage)sendMessage(v)}});
+$('msgIn').addEventListener('input',e=>{const live=(e.target.value.trim()||S._pendingImage)&&!S.thinking;$('sendBtn').className='send'+(live?' live':'')});
+$('camBtn').onclick=()=>$('fileIn').click();
+$('uploadBtn').onclick=()=>$('uploadIn').click();
+$('fileIn').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(f)attachImage(f);};
+$('uploadIn').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(f)attachImage(f);};
+$('tSave').onclick=saveTask;
+$('tDelete').onclick=()=>{if(S.editTask&&confirm('Delete this task?')){S.tasks=S.tasks.filter(x=>x.id!==S.editTask);persist();closeScrim('taskScrim');render();checkTaskNotifications(true);}};
+$('taskScrim').onclick=e=>{if(e.target.id==='taskScrim')closeScrim('taskScrim')};
+
+/* ── Boot (demo — no auth) ── */
+const _authGate=$('authGate');
+_authGate.style.display='none';
+
+// Hide the sign-in button since it references Firebase (not present in demo)
+const _signInBtn = document.getElementById('signInBtn');
+if(_signInBtn) _signInBtn.style.display='none';
+
+// Set the demo badge up
+S.setupOpen = false;
+normalizePoolModel();
+computeBeliefs();
+render();
+scheduleTaskNotificationChecks();
+checkTaskNotifications(true);
+try{fetchWeather();}catch(e){}
+
+</script>
+</body>
+</html>
