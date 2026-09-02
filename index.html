@@ -1176,6 +1176,27 @@ function dismissAction(mi,ai){
   render();
 }
 
+/* ── Demo: simulate a strip scan ── */
+function demoScanStrip(){
+  S.messages.push({role:'user',content:'📷 Scan my test strip'});
+  S.messages.push({role:'assistant',content:`I see your test strip! Here's what I'm reading:
+
+**Free Chlorine:** 0 ppm — critically low, pool is not sanitized
+**Total Chlorine:** 0.5 ppm
+**pH:** 6.8 — too acidic, below ideal range
+**Total Alkalinity:** 60 ppm — low, pH will be unstable
+**Calcium Hardness:** 100 ppm — low, water may corrode surfaces
+**Cyanuric Acid (CYA):** 0 ppm — no stabilizer at all, chlorine will burn off immediately
+
+This strip shows a pool that needs several corrections before it's safe to swim. Chlorine is at zero so there's no sanitation happening. The pH is acidic at 6.8 which can be corrosive. Your alkalinity is low which is why pH keeps dropping. And zero CYA means any chlorine you add will vanish in a few hours of sunlight.
+
+Let's tackle these one at a time — start with getting alkalinity up to stabilize pH, add some CYA to protect your chlorine, then bring chlorine up to a safe level.
+
+<!--READINGS:{"chlorine":0,"totalChlorine":0.5,"ph":6.8,"alkalinity":60,"hardness":100,"cyanuric":0,"confidence":{"chlorine":95,"totalChlorine":80,"ph":90,"alkalinity":75,"hardness":85,"cyanuric":85}}-->`);
+  render();
+  setTimeout(()=>$('bottom')?.scrollIntoView({behavior:'smooth'}),50);
+}
+
 function renderChat(b){
   const quick=(function(){
     const hist=S.history||[];
@@ -1223,11 +1244,16 @@ function renderChat(b){
     html+=`<div class="msg ${u?'u':''}">${u?'':`<div class="av">${AV}</div>`}<div class="bub ${u?'u':'a'}">${imgHtml}${esc(displayText)}${sentBadge}${cardHtml}${actHtml}</div></div>`;
   });
   if(S.thinking)html+=`<div class="msg"><div class="av">${AV}</div><div class="dots"><i style="animation-delay:0s"></i><i style="animation-delay:.2s"></i><i style="animation-delay:.4s"></i></div></div>`;
-  if(S.messages.length===1&&!S.thinking){
-    html+=`<div class="sugg"><div class="h">Suggested questions</div>${quick.map(q=>`<button class="sg" data-q="${esc(q)}">${q}</button>`).join('')}</div>`;
-  }
-  html+='<div id="bottom"></div></div>';
-  b.innerHTML=html;
+    if(S.messages.length===1&&!S.thinking){
+      html+=`<div class="sugg"><div class="h">Suggested questions</div>${quick.map(q=>`<button class="sg" data-q="${esc(q)}">${q}</button>`).join('')}</div>`;
+    }
+    // Demo scan button — always visible in chat
+    html+=`<div style="text-align:center;margin:16px 0;padding-top:4px;border-top:1px solid var(--line)">
+      <button id="demoScanBtn" style="background:rgba(232,185,106,.15);border:1px solid rgba(232,185,106,.4);border-radius:10px;padding:10px 20px;color:#e8b96a;font-size:13px;font-family:inherit;cursor:pointer;width:100%">📷 Scan Demo Strip</button>
+      <div style="font-size:9px;color:var(--mut2);margin-top:6px;font-family:'DM Mono',monospace">Shows a sample results card with dosing advice</div>
+    </div>`;
+    html+='<div id="bottom"></div></div>';
+    b.innerHTML=html;
   b.querySelectorAll('.sg').forEach(s=>s.onclick=()=>sendMessage(s.dataset.q));
   b.querySelectorAll('.rcard-save').forEach(btn=>{
     if(btn.disabled)return;
@@ -1242,12 +1268,15 @@ function renderChat(b){
       }
     };
   });
-  b.querySelectorAll('.act-do').forEach(btn=>btn.onclick=e=>{e.stopPropagation();executeAction(+btn.dataset.mi,+btn.dataset.ai);});
-  b.querySelectorAll('.act-no').forEach(btn=>btn.onclick=e=>{e.stopPropagation();dismissAction(+btn.dataset.mi,+btn.dataset.ai);});
-  $('bottom')?.scrollIntoView({behavior:'smooth'});
-}
+    b.querySelectorAll('.act-do').forEach(btn=>btn.onclick=e=>{e.stopPropagation();executeAction(+btn.dataset.mi,+btn.dataset.ai);});
+    b.querySelectorAll('.act-no').forEach(btn=>btn.onclick=e=>{e.stopPropagation();dismissAction(+btn.dataset.mi,+btn.dataset.ai);});
+    // Demo scan button
+    const demoScanBtn=$('demoScanBtn');
+    if(demoScanBtn)demoScanBtn.onclick=demoScanStrip;
+    $('bottom')?.scrollIntoView({behavior:'smooth'});
+  }
 
-function renderChem(b){
+  function renderChem(b){
   const r=S._draft||{};
   const last=S.history[0];
   let html=`<div class="bin"><div class="formcard">
